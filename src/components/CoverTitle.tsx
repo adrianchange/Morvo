@@ -9,12 +9,16 @@ import {
 import { motion } from "motion/react";
 import { PALETTES, type PaletteId, type PaletteTheme } from "../theme/palettes";
 import { type ReactNode } from "react";
-import { fontDisplay, paletteFonts, HELECHO_FONTS, HELECHO_TITLE_STYLE } from "../theme/typography";
+import { useIsMobile } from "../hooks/useIsMobile";
+import { fontDisplay, paletteFonts, HELECHO_FONTS, HELECHO_TITLE_FONT_SIZE, HELECHO_TITLE_STYLE, HELECHO_TITLE_SCALE_X, NIEBLA_TITLE_SCALE_X, SELVA_CREDIT_FONT, SELVA_TITLE_SCALE_X } from "../theme/typography";
 import {
   GREEN_PINO,
   GREEN_PINO_LIGHT,
+  GREEN_RAIZ_BOSQUE,
   HELECHO_CYAN,
+  HELECHO_BG,
   MEZCLA_RED,
+  NIEBLA_BLACK,
   RAIZ_OXIDO,
   swapColorTransition,
 } from "../theme/swap";
@@ -106,6 +110,8 @@ export function RaizCredit({
         letterSpacing: "0.22em",
         textTransform: "lowercase",
         color: greenLight,
+        textAlign: "center",
+        alignSelf: "center",
       }}
       initial={{ opacity: 0.88 }}
       animate={{
@@ -341,23 +347,25 @@ const DRIP_DROP_CY = [
 
 const DRIP_DROP_R_ANIM = [0, DRIP_DROP_R * 0.55, DRIP_DROP_R * 0.85, DRIP_DROP_R, DRIP_DROP_R, 0] as const;
 
-/** Niebla — recto desde junta, en línea junta → punta → final */
-const NIEBLA_DRIP_DX = FONT_TIP_X - HELECHO_V_INNER_JOINT.x;
+/** Niebla — rayo junta interior → punta exterior (V asimétrica: 173 → 168) */
+const NIEBLA_TEAR_H = 36;
+const NIEBLA_TEAR_W = 14;
 const NIEBLA_DRIP_DY = FONT_TIP_Y - HELECHO_V_INNER_JOINT.y;
+
+const nieblaDripXOnRay = (y: number) => {
+  const j = HELECHO_V_INNER_JOINT;
+  if (y >= j.y) return j.x;
+  const t = (y - j.y) / NIEBLA_DRIP_DY;
+  return j.x + (FONT_TIP_X - j.x) * t;
+};
 
 const nieblaDripLead = (endY: number) => {
   const j = HELECHO_V_INNER_JOINT;
   if (endY >= j.y) return { x: j.x, y: j.y };
-  const t = (endY - j.y) / NIEBLA_DRIP_DY;
-  return { x: j.x + NIEBLA_DRIP_DX * t, y: endY };
+  return { x: nieblaDripXOnRay(endY), y: endY };
 };
 
-const nieblaDripPath = (endY: number) => {
-  const j = HELECHO_V_INNER_JOINT;
-  if (endY >= j.y) return `M${j.x},${j.y} L${j.x},${j.y}`;
-  const lead = nieblaDripLead(endY);
-  return `M${j.x},${j.y} L${lead.x},${lead.y}`;
-};
+const nieblaTearAttachY = (endY: number, scale: number) => endY + NIEBLA_TEAR_H * scale;
 
 const NIEBLA_DRIP_END_Y = dripLineEndFont(DRIP_LEN);
 const NIEBLA_DRIP_FULL = HELECHO_V_INNER_JOINT.y - NIEBLA_DRIP_END_Y;
@@ -365,29 +373,481 @@ const NIEBLA_DRIP_FULL = HELECHO_V_INNER_JOINT.y - NIEBLA_DRIP_END_Y;
 const nieblaDripEndAt = (dripProgress: number) =>
   HELECHO_V_INNER_JOINT.y - (dripProgress / DRIP_LEN) * NIEBLA_DRIP_FULL;
 
+/** 0-2 lágrima sola en junta · 3+ caída con trazo creciendo detrás */
 const NIEBLA_DRIP_KEY_END_Y = [
   HELECHO_V_INNER_JOINT.y,
-  nieblaDripEndAt(90),
-  nieblaDripEndAt(200),
-  NIEBLA_DRIP_END_Y,
+  HELECHO_V_INNER_JOINT.y,
+  HELECHO_V_INNER_JOINT.y,
+  HELECHO_V_INNER_JOINT.y - 32,
+  HELECHO_V_INNER_JOINT.y - 95,
+  nieblaDripEndAt(85),
   NIEBLA_DRIP_END_Y,
   HELECHO_V_INNER_JOINT.y,
 ] as const;
 
-const NIEBLA_DRIP_PATHS = NIEBLA_DRIP_KEY_END_Y.map(nieblaDripPath);
+const NIEBLA_TEAR_SCALES = [0, 0.82, 0.88, 0.88, 0.92, 0.96, 1, 0] as const;
+const NIEBLA_TEAR_OPACITY = [0, 1, 1, 1, 1, 1, 1, 0] as const;
+const NIEBLA_LINE_OPACITY = [0, 0, 0, 0.55, 1, 1, 1, 0] as const;
+const NIEBLA_DRIP_LINE_W = 7;
+const NIEBLA_TEAR_STROKE = "#4A0A10";
 
-const nieblaDropCxAt = (endY: number) => nieblaDripLead(endY).x;
-const nieblaDropCyAt = (endY: number) => endY - DRIP_DROP_R * 0.35;
+const NIEBLA_TEAR_LOCAL = (() => {
+  const h = NIEBLA_TEAR_H;
+  const w = NIEBLA_TEAR_W;
+  return [
+    `M0,0`,
+    `C${w * 0.95},${h * 0.36}`,
+    ` ${w * 0.75},${h * 0.86}`,
+    ` ${w * 0.4},${h}`,
+    `C${w * 0.14},${h * 1.05}`,
+    ` ${-w * 0.14},${h * 1.05}`,
+    ` ${-w * 0.4},${h}`,
+    `C${-w * 0.75},${h * 0.86}`,
+    ` ${-w * 0.95},${h * 0.36}`,
+    ` 0,0 Z`,
+  ].join("");
+})();
 
-const NIEBLA_DRIP_DROP_CX = NIEBLA_DRIP_KEY_END_Y.map(nieblaDropCxAt);
-const NIEBLA_DRIP_DROP_CY = NIEBLA_DRIP_KEY_END_Y.map(nieblaDropCyAt);
+const nieblaDripPathWithTear = (endY: number, scale: number) => {
+  const j = HELECHO_V_INNER_JOINT;
+  if (scale <= 0 || endY >= j.y) return `M${j.x},${j.y} L${j.x},${j.y}`;
+  const attachY = nieblaTearAttachY(endY, scale);
+  if (attachY >= j.y) return `M${j.x},${j.y} L${j.x},${j.y}`;
+  const attachX = nieblaDripXOnRay(attachY);
+  return `M${j.x},${j.y} L${attachX},${attachY}`;
+};
+
+const NIEBLA_DRIP_PATHS = NIEBLA_DRIP_KEY_END_Y.map((endY, i) =>
+  nieblaDripPathWithTear(endY, NIEBLA_TEAR_SCALES[i]),
+);
+
+const NIEBLA_TEAR_X = NIEBLA_DRIP_KEY_END_Y.map((endY) => nieblaDripLead(endY).x);
+const NIEBLA_TEAR_Y = [...NIEBLA_DRIP_KEY_END_Y];
 
 const nieblaDripTransition = {
-  duration: 5,
+  duration: 6.5,
   repeat: Infinity,
   ease: "easeInOut" as const,
-  times: [0, 0.12, 0.28, 0.42, 0.78, 1],
-  repeatDelay: 0.35,
+  times: [0, 0.07, 0.14, 0.22, 0.34, 0.52, 0.8, 1],
+  repeatDelay: 0.5,
+};
+
+/** Pino — Killing Eve: hilo fino + gota colgante */
+const PINO_DRIP_LINE_W = 4;
+const PINO_DROP_H = 68;
+const PINO_DROP_W = 28;
+/** Pino — recorrido más largo que Niebla para que la gota llegue al nivel del crédito */
+const PINO_DRIP_LEN = DRIP_LEN + 110;
+const PINO_DRIP_FULL = HELECHO_V_INNER_JOINT.y - dripLineEndFont(PINO_DRIP_LEN);
+const pinoDripEndAt = (progress: number) =>
+  HELECHO_V_INNER_JOINT.y - (progress / PINO_DRIP_LEN) * PINO_DRIP_FULL;
+const PINO_BOTTOM_Y = pinoDripEndAt(PINO_DRIP_LEN);
+const PINO_MID_Y_EXTENDED = pinoDripEndAt(PINO_DRIP_LEN / 2);
+/** Cuánto sobresale la gota bajo el cajón del glifo V (→ marginTop del crédito) */
+const PINO_DROP_BELOW_V_EM =
+  (1432 - PINO_BOTTOM_Y - 12 - HELECHO_V_INK_H) / HELECHO_V_UPEM;
+const PINO_CREDIT_MARGIN_TOP = `calc(10px + ${PINO_DROP_BELOW_V_EM} * ${HELECHO_TITLE_FONT_SIZE} + clamp(6px, 0.8vh, 14px))`;
+const PINO_JOINT = HELECHO_V_INNER_JOINT;
+
+/** Gota — (0,0) punta delantera; cuerpo +y hacia la junta (cola = fin del hilo) */
+const PINO_DROP_LOCAL = (() => {
+  const h = PINO_DROP_H;
+  const w = PINO_DROP_W;
+  return [
+    `M0,0`,
+    `C${w * 0.22},${h * 0.07}`,
+    ` ${w * 0.88},${h * 0.44}`,
+    ` ${w * 0.44},${h * 0.82}`,
+    `C${w * 0.16},${h * 0.97}`,
+    ` ${-w * 0.16},${h * 0.97}`,
+    ` ${-w * 0.44},${h * 0.82}`,
+    `C${-w * 0.88},${h * 0.44}`,
+    ` ${-w * 0.22},${h * 0.07}`,
+    ` 0,0 Z`,
+  ].join("");
+})();
+
+/** Cola de la gota (hacia junta) — ahí se une el hilo */
+const pinoDropBackY = (leadY: number, scale: number) =>
+  leadY >= PINO_JOINT.y ? PINO_JOINT.y : Math.min(leadY + PINO_DROP_H * scale, PINO_JOINT.y);
+
+const pinoTrailEnd = (leadY: number, scale: number) => {
+  const backY = pinoDropBackY(leadY, scale);
+  return { x: nieblaDripXOnRay(backY), y: backY };
+};
+
+/** Punta delantera; en junta la cola (+y local) queda en (173,720) */
+const pinoDropPos = (leadY: number, scale: number) => {
+  if (leadY >= PINO_JOINT.y) {
+    if (scale <= 0) return { x: PINO_JOINT.x, y: PINO_JOINT.y };
+    return { x: PINO_JOINT.x, y: PINO_JOINT.y - PINO_DROP_H * scale };
+  }
+  return nieblaDripLead(leadY);
+};
+
+/** Timeline Pino — 13 keyframes (0-12) · formación en junta · arranque lento */
+const PINO_HOLD_S = 3;
+const PINO_FADE_S = 0.35;
+const PINO_FALL_S = 5;
+const PINO_DRIP_DURATION = PINO_FALL_S + PINO_HOLD_S + PINO_FADE_S;
+
+const PINO_T_ARRIVE = PINO_FALL_S / PINO_DRIP_DURATION;
+const PINO_T_HOLD_END = (PINO_FALL_S + PINO_HOLD_S) / PINO_DRIP_DURATION;
+
+const pinoDripTimes = [
+  0,
+  0.04,
+  0.08,
+  0.16,
+  0.34,
+  0.4,
+  0.46,
+  0.5,
+  0.52,
+  0.54,
+  PINO_T_ARRIVE,
+  PINO_T_HOLD_END,
+  1,
+] as const;
+
+/** 0-3 junta · 4 arranque lento+rastro · 5-7 baja · 8-9 mitad · 10-11 abajo · 12 reset */
+const PINO_DRIP_KEY_END_Y = [
+  PINO_JOINT.y,
+  PINO_JOINT.y,
+  PINO_JOINT.y,
+  PINO_JOINT.y,
+  pinoDripEndAt(8),
+  pinoDripEndAt(45),
+  pinoDripEndAt(95),
+  pinoDripEndAt(155),
+  PINO_MID_Y_EXTENDED,
+  PINO_MID_Y_EXTENDED,
+  PINO_BOTTOM_Y,
+  PINO_BOTTOM_Y,
+  PINO_BOTTOM_Y,
+] as const;
+
+const PINO_DROP_OPACITY = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0] as const;
+const PINO_DROP_SCALE_START = 0.16;
+const PINO_DROP_SCALE_MAX = 1.14;
+const PINO_DROP_SCALE = [
+  0,
+  PINO_DROP_SCALE_START,
+  0.28,
+  0.38,
+  0.42,
+  0.52,
+  0.64,
+  0.74,
+  0.84,
+  0.92,
+  1.08,
+  PINO_DROP_SCALE_MAX,
+  PINO_DROP_SCALE_START,
+] as const;
+/** Rastro kf 4–7 al bajar · kf 8 mitad → corte instantáneo · kf 9+ caída libre sin hilo */
+const PINO_LINE_OPACITY = [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0] as const;
+
+const PINO_DROP_X = PINO_DRIP_KEY_END_Y.map((leadY, i) => pinoDropPos(leadY, PINO_DROP_SCALE[i]).x);
+const PINO_DROP_Y = PINO_DRIP_KEY_END_Y.map((leadY, i) => pinoDropPos(leadY, PINO_DROP_SCALE[i]).y);
+
+/** Hilo congelado en mitad desde kf 9 — la gota cae sola; kf 8 = último frame con trazo */
+const pinoMidTrailPoint = pinoTrailEnd(PINO_MID_Y_EXTENDED, PINO_DROP_SCALE[8]);
+const PINO_TRAIL_X2 = PINO_DRIP_KEY_END_Y.map((leadY, i) =>
+  i >= 9 ? pinoMidTrailPoint.x : pinoTrailEnd(leadY, PINO_DROP_SCALE[i]).x,
+);
+const PINO_TRAIL_Y2 = PINO_DRIP_KEY_END_Y.map((leadY, i) =>
+  i >= 9 ? pinoMidTrailPoint.y : pinoTrailEnd(leadY, PINO_DROP_SCALE[i]).y,
+);
+
+const PINO_DRIP_CYCLE = {
+  duration: PINO_DRIP_DURATION,
+  repeat: Infinity,
+  ease: "linear" as const,
+  repeatDelay: 0.5,
+} as const;
+
+const pinoDripTransition = {
+  ...PINO_DRIP_CYCLE,
+  times: [...pinoDripTimes],
+};
+
+const pinoDripEaseTransition = {
+  ...pinoDripTransition,
+  ease: "easeInOut" as const,
+};
+
+/** Caída + rastro en lockstep (misma velocidad gota y hilo) */
+const pinoFallSyncTransition = {
+  ...pinoDripTransition,
+  ease: "linear" as const,
+};
+
+/** Selva — círculo en junta → gota + hilo recto → suelta a mitad → caída rápida */
+const SELVA_DRIP_LINE_W = 4;
+const SELVA_DROP_H = 64;
+/** Mitad del ancho máximo — perfil de cloud_13869263.png (Downloads) */
+const SELVA_DROP_HALF_W = SELVA_DROP_H * 0.326;
+const SELVA_DRIP_LEN = DRIP_LEN + 110;
+const SELVA_DRIP_FULL = HELECHO_V_INNER_JOINT.y - dripLineEndFont(SELVA_DRIP_LEN);
+const selvaDripEndAt = (progress: number) =>
+  HELECHO_V_INNER_JOINT.y - (progress / SELVA_DRIP_LEN) * SELVA_DRIP_FULL;
+const SELVA_BOTTOM_Y = selvaDripEndAt(SELVA_DRIP_LEN);
+/** Extensión extra sobre el final del rayo (coords inner) */
+const SELVA_DROP_LAND_Y = SELVA_BOTTOM_Y - 120;
+/** px extra al impactar vía keyframes Y (unidades inner, ~10 px pantalla ≈ 85) */
+const SELVA_DROP_LAND_EXTRA_Y = 85;
+const SELVA_MID_Y = selvaDripEndAt(SELVA_DRIP_LEN / 2);
+const SELVA_JOINT = HELECHO_V_INNER_JOINT;
+const SELVA_DROP_BELOW_V_EM =
+  (1432 - SELVA_BOTTOM_Y - 12 - HELECHO_V_INK_H) / HELECHO_V_UPEM;
+const SELVA_CREDIT_MARGIN_TOP = `calc(10px + ${SELVA_DROP_BELOW_V_EM} * ${HELECHO_TITLE_FONT_SIZE} + clamp(2px, 0.35vh, 8px) - 0.2em)`;
+/** Alinear la «e» bajo la gota al impactar (coords SVG del vértice de caída) */
+const SELVA_DROP_LAND = nieblaDripLead(SELVA_DROP_LAND_Y);
+const SELVA_CREDIT_NUDGE_X_BASE = `${((SELVA_DROP_LAND.x - HELECHO_V_ADVANCE * 0.5) / HELECHO_V_UPEM) * 4.8 - 1.05}em`;
+/** Compresión horizontal del crédito (Selva / Helecho) */
+export const DROP_CREDIT_SCALE_X = { mobile: 0.78, desktop: 0.86 } as const;
+export const DROP_CREDIT_FONT_SIZE = "clamp(15px, 2vw, 42px)";
+const SELVA_CREDIT_SCALE_X = DROP_CREDIT_SCALE_X;
+
+/** Path SVG trazado desde cloud_13869263.png — punta (0,0) · bulbo +y */
+const SELVA_DROP_LOCAL = (() => {
+  const h = SELVA_DROP_H;
+  const w = SELVA_DROP_HALF_W;
+  return [
+    `M0,0`,
+    `C${w * 0.34},${h * 0.07}`,
+    ` ${w * 0.77},${h * 0.28}`,
+    ` ${w * 0.98},${h * 0.41}`,
+    `C${w * 0.94},${h * 0.51}`,
+    ` ${w * 0.79},${h * 0.63}`,
+    ` ${w * 0.67},${h * 0.72}`,
+    `C${w * 0.53},${h * 0.85}`,
+    ` ${w * 0.32},${h * 0.95}`,
+    ` ${w * 0.19},${h * 0.99}`,
+    `C0,${h}`,
+    ` ${-w * 0.19},${h * 0.99}`,
+    ` ${-w * 0.32},${h * 0.95}`,
+    `C${-w * 0.53},${h * 0.85}`,
+    ` ${-w * 0.67},${h * 0.72}`,
+    ` ${-w * 0.79},${h * 0.63}`,
+    `C${-w * 0.94},${h * 0.51}`,
+    ` ${-w * 0.98},${h * 0.41}`,
+    ` ${-w * 0.77},${h * 0.28}`,
+    `C${-w * 0.34},${h * 0.07}`,
+    ` 0,0 Z`,
+  ].join("");
+})();
+
+const SELVA_INRAY_LEN = Math.hypot(FONT_TIP_X - SELVA_JOINT.x, NIEBLA_DRIP_DY);
+/** Punta en la junta, sobre el rayo interior (ligero paso hacia la punta exterior) */
+const SELVA_DRIP_ANCHOR = {
+  x: nieblaDripXOnRay(SELVA_JOINT.y - 2),
+  y: SELVA_JOINT.y - 2,
+};
+
+/** Cola de la gota en el rayo — el hilo NUNCA pasa por delante de la punta */
+const selvaDropAttach = (leadY: number, scaleY: number) => {
+  if (leadY >= SELVA_JOINT.y) {
+    return { x: SELVA_JOINT.x, y: SELVA_JOINT.y };
+  }
+  const extend = SELVA_DROP_H * scaleY;
+  const tipT = (leadY - SELVA_JOINT.y) / NIEBLA_DRIP_DY;
+  const backT = Math.max(tipT - extend / SELVA_INRAY_LEN, 0);
+  const backY = SELVA_JOINT.y + NIEBLA_DRIP_DY * backT;
+  return { x: nieblaDripXOnRay(backY), y: backY };
+};
+
+const selvaTrailLerp = (
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  t: number,
+) => ({
+  x: from.x + (to.x - from.x) * t,
+  y: from.y + (to.y - from.y) * t,
+});
+
+const selvaDropPos = (leadY: number) => {
+  if (leadY >= SELVA_JOINT.y) return { ...SELVA_DRIP_ANCHOR };
+  return nieblaDripLead(leadY);
+};
+
+/** Misma orientación siempre: cola (+y local) hacia la junta — sin giro al salir */
+const selvaDropAngle = (leadY: number) => {
+  const tipY = leadY >= SELVA_JOINT.y ? SELVA_DRIP_ANCHOR.y : leadY;
+  const tipX =
+    leadY >= SELVA_JOINT.y ? SELVA_DRIP_ANCHOR.x : nieblaDripXOnRay(tipY);
+  const dx = SELVA_JOINT.x - tipX;
+  const dy = SELVA_JOINT.y - tipY;
+  return (Math.atan2(dx, dy) * 180) / Math.PI;
+};
+
+/** Verde bosque dentro de la V · negro al pasar la punta exterior */
+const SELVA_CAMOUFLAGE = GREEN_RAIZ_BOSQUE;
+const SELVA_DROP_INK = NIEBLA_BLACK;
+
+const SELVA_HOLD_S = 5;
+const SELVA_FADE_S = 0.35;
+const SELVA_FALL_S = 8.5;
+const SELVA_DRIP_DURATION = SELVA_FALL_S + SELVA_HOLD_S + SELVA_FADE_S;
+
+const SELVA_T_ARRIVE = SELVA_FALL_S / SELVA_DRIP_DURATION;
+const SELVA_T_HOLD_END = (SELVA_FALL_S + SELVA_HOLD_S) / SELVA_DRIP_DURATION;
+/** Instante exacto en que la gota toca el suelo (kf 11) */
+const SELVA_T_BOTTOM = SELVA_T_ARRIVE;
+
+const selvaDripTimes = [
+  0,
+  0.05,
+  0.1,
+  0.16,
+  0.24,
+  0.3,
+  0.35,
+  0.39,
+  0.43,
+  0.48,
+  0.53,
+  SELVA_T_BOTTOM,
+  SELVA_T_HOLD_END,
+  1,
+] as const;
+
+/** 0-3 junta · 4-10 caída · 11-12 abajo · 13 reset */
+const SELVA_DRIP_KEY_END_Y = [
+  SELVA_JOINT.y,
+  SELVA_JOINT.y,
+  SELVA_JOINT.y,
+  SELVA_JOINT.y,
+  selvaDripEndAt(10),
+  selvaDripEndAt(50),
+  selvaDripEndAt(100),
+  selvaDripEndAt(160),
+  SELVA_MID_Y,
+  selvaDripEndAt(SELVA_DRIP_LEN * 0.56),
+  selvaDripEndAt(SELVA_DRIP_LEN * 0.64),
+  SELVA_DROP_LAND_Y,
+  SELVA_DROP_LAND_Y,
+  SELVA_DROP_LAND_Y,
+] as const;
+
+const SELVA_DROP_OPACITY = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0] as const;
+/** Crecimiento continuo: punta en junta → estira → hincha al soltar → sigue creciendo */
+const SELVA_SCALE_X = [
+  0,
+  0.05,
+  0.1,
+  0.16,
+  0.22,
+  0.3,
+  0.38,
+  0.46,
+  1.05,
+  1.2,
+  1.3,
+  1.38,
+  1.44,
+  0.2,
+] as const;
+const SELVA_SCALE_Y = [
+  0,
+  0.06,
+  0.13,
+  0.21,
+  0.3,
+  0.42,
+  0.56,
+  0.7,
+  1.75,
+  1.92,
+  2.05,
+  2.14,
+  2.2,
+  0.2,
+] as const;
+/** Hilo desde kf 5 · retracción kf 8-10 */
+const SELVA_LINE_OPACITY = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0] as const;
+const SELVA_PATH_OPACITY = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0] as const;
+
+const selvaDripFillKeyframes = (
+  letterInk: string,
+  camoInk: string,
+  dropInk: string,
+) =>
+  SELVA_DRIP_KEY_END_Y.map((leadY, i) => {
+    if (i >= 13) return camoInk;
+    if (i >= 11) return letterInk;
+    return leadY > FONT_TIP_Y ? camoInk : dropInk;
+  });
+
+const SELVA_DROP_X = SELVA_DRIP_KEY_END_Y.map((leadY) => selvaDropPos(leadY).x);
+const selvaDropYKeyframes = (landExtraY: number) =>
+  SELVA_DRIP_KEY_END_Y.map((leadY, i) => {
+    const y = selvaDropPos(leadY).y;
+    return i >= 11 && i <= 12 ? y - landExtraY : y;
+  });
+const SELVA_DROP_ROTATE = SELVA_DRIP_KEY_END_Y.map((leadY) => selvaDropAngle(leadY));
+
+const HELECHO_V_HEIGHT_EM = HELECHO_V_INK_H / HELECHO_V_UPEM;
+const HELECHO_V_WIDTH_EM = HELECHO_V_ADVANCE / HELECHO_V_UPEM;
+
+const selvaReleaseAttach = selvaDropAttach(SELVA_MID_Y, SELVA_SCALE_Y[8]);
+const SELVA_TRAIL_X2 = SELVA_DRIP_KEY_END_Y.map((leadY, i) => {
+  if (i >= 10) return SELVA_JOINT.x;
+  if (i === 9) return selvaTrailLerp(selvaReleaseAttach, SELVA_JOINT, 0.42).x;
+  if (i <= 3) return SELVA_JOINT.x;
+  return selvaDropAttach(leadY, SELVA_SCALE_Y[i]).x;
+});
+const SELVA_TRAIL_Y2 = SELVA_DRIP_KEY_END_Y.map((leadY, i) => {
+  if (i >= 10) return SELVA_JOINT.y;
+  if (i === 9) return selvaTrailLerp(selvaReleaseAttach, SELVA_JOINT, 0.42).y;
+  if (i <= 3) return SELVA_JOINT.y;
+  return selvaDropAttach(leadY, SELVA_SCALE_Y[i]).y;
+});
+
+const selvaDripTransition = {
+  duration: SELVA_DRIP_DURATION,
+  repeat: Infinity,
+  ease: "linear" as const,
+  times: [...selvaDripTimes],
+  repeatDelay: 0.5,
+};
+
+const selvaDripEaseTransition = {
+  ...selvaDripTransition,
+  ease: "easeInOut" as const,
+};
+
+const selvaScaleGrowTransition = {
+  ...selvaDripTransition,
+  ease: "easeOut" as const,
+};
+
+const selvaFallSyncTransition = {
+  ...selvaDripTransition,
+  ease: "linear" as const,
+};
+
+const selvaTrailLineTransition = {
+  duration: SELVA_DRIP_DURATION,
+  repeat: Infinity,
+  ease: [
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+    "linear",
+    "easeIn",
+    "easeIn",
+    "linear",
+    "linear",
+    "linear",
+  ] as ("linear" | "easeIn")[],
+  times: [...selvaDripTimes],
+  repeatDelay: 0.5,
 };
 
 const helechoDripTransition = {
@@ -404,22 +864,38 @@ function HelechoTitleRow({
   vColor = HELECHO_CYAN,
   halo = "cyan",
   dripVariant = "helecho",
+  scaleX,
+  jointTearColor,
+  jointTearStroke,
+  selvaCamoInk,
+  selvaDropInk,
 }: {
   letterColor: string;
   whiteBlink?: boolean;
   vColor?: string;
   halo?: "cyan" | "black";
-  dripVariant?: "helecho" | "niebla";
+  dripVariant?: "helecho" | "niebla" | "pino" | "selva";
+  scaleX?: number;
+  jointTearColor?: string;
+  jointTearStroke?: string;
+  selvaCamoInk?: string;
+  selvaDropInk?: string;
 }) {
   const letters = ["M", "O", "R", "V", "O"] as const;
+  const titleLetterGap = HELECHO_TITLE_STYLE.letterSpacing;
   return (
     <span
       style={{
         ...HELECHO_TITLE_STYLE,
+        letterSpacing: 0,
+        gap: titleLetterGap,
         display: "inline-flex",
         alignItems: "baseline",
         flexWrap: "nowrap",
         whiteSpace: "nowrap",
+        ...(scaleX && scaleX !== 1
+          ? { transform: `scaleX(${scaleX})`, transformOrigin: "center center" }
+          : {}),
       }}
     >
       {letters.map((ch, i) =>
@@ -430,6 +906,10 @@ function HelechoTitleRow({
             whiteBlink={whiteBlink}
             halo={halo}
             dripVariant={dripVariant}
+            jointTearColor={jointTearColor}
+            jointTearStroke={jointTearStroke}
+            selvaCamoInk={selvaCamoInk}
+            selvaDropInk={selvaDropInk}
           />
         ) : (
           <span
@@ -438,6 +918,7 @@ function HelechoTitleRow({
               color: letterColor,
               fontFamily: HELECHO_TITLE_STYLE.fontFamily,
               fontWeight: HELECHO_TITLE_STYLE.fontWeight,
+              letterSpacing: 0,
             }}
           >
             {ch}
@@ -453,36 +934,107 @@ export function HelechoNeonV({
   whiteBlink = false,
   halo = "cyan",
   dripVariant = "helecho",
+  jointTearColor,
+  jointTearStroke,
+  selvaCamoInk,
+  selvaDropInk,
 }: {
   color?: string;
   whiteBlink?: boolean;
   halo?: "cyan" | "black";
-  dripVariant?: "helecho" | "niebla";
+  dripVariant?: "helecho" | "niebla" | "pino" | "selva";
+  jointTearColor?: string;
+  jointTearStroke?: string;
+  selvaCamoInk?: string;
+  selvaDropInk?: string;
 }) {
+  const mobile = useIsMobile();
+  const selvaDropYAnim = selvaDropYKeyframes(SELVA_DROP_LAND_EXTRA_Y);
   const blinkFill = petroleoVBlinkFill(color);
-  const isNieblaDrip = dripVariant === "niebla";
-  const dripPaths = isNieblaDrip ? NIEBLA_DRIP_PATHS : DRIP_PATHS;
-  const dripDropCy = isNieblaDrip ? NIEBLA_DRIP_DROP_CY : DRIP_DROP_CY;
-  const dripDropCx = isNieblaDrip ? NIEBLA_DRIP_DROP_CX : undefined;
-  const dripTransition = isNieblaDrip ? nieblaDripTransition : helechoDripTransition;
-  const dripColor = isNieblaDrip ? MEZCLA_RED : color;
+  const isJointTearDrip =
+    dripVariant === "niebla" || dripVariant === "pino" || dripVariant === "selva";
+  const isPinoDrip = dripVariant === "pino";
+  const isSelvaDrip = dripVariant === "selva";
+  const isLineDrip = isPinoDrip || isSelvaDrip;
+  const camoInk = selvaCamoInk ?? SELVA_CAMOUFLAGE;
+  const dropInk = selvaDropInk ?? SELVA_DROP_INK;
+  const selvaDripFill = selvaDripFillKeyframes(color, camoInk, dropInk);
+  const dripPaths = isLineDrip ? [] : isJointTearDrip ? NIEBLA_DRIP_PATHS : DRIP_PATHS;
+  const dripTransition = isPinoDrip
+    ? pinoDripEaseTransition
+    : isSelvaDrip
+      ? selvaDripEaseTransition
+      : isJointTearDrip
+        ? nieblaDripTransition
+        : helechoDripTransition;
+  const lineOpacityTransition = isPinoDrip
+    ? pinoDripTransition
+    : isSelvaDrip
+      ? selvaDripTransition
+      : dripTransition;
+  const dripColor = isJointTearDrip ? (jointTearColor ?? MEZCLA_RED) : color;
+  const tearStroke = jointTearStroke ?? NIEBLA_TEAR_STROKE;
+  const jointLineOpacity = isPinoDrip
+    ? PINO_LINE_OPACITY
+    : isSelvaDrip
+      ? SELVA_LINE_OPACITY
+      : NIEBLA_LINE_OPACITY;
+  const jointLineWidth = isLineDrip
+    ? isSelvaDrip
+      ? SELVA_DRIP_LINE_W
+      : PINO_DRIP_LINE_W
+    : NIEBLA_DRIP_LINE_W;
+  const jointLineCap = "butt";
+  const lineJoint = isSelvaDrip ? SELVA_JOINT : PINO_JOINT;
+  const lineTrailX2 = isSelvaDrip ? SELVA_TRAIL_X2 : PINO_TRAIL_X2;
+  const lineTrailY2 = isSelvaDrip ? SELVA_TRAIL_Y2 : PINO_TRAIL_Y2;
+  const lineFallSync = isSelvaDrip ? selvaFallSyncTransition : pinoFallSyncTransition;
+  const lineRetractSync = isSelvaDrip ? selvaTrailLineTransition : lineFallSync;
 
-  const dripLineAnimate = {
-    opacity: [0, 1, 1, 1, 1, 0],
-    ...(whiteBlink && !isNieblaDrip ? { stroke: [...blinkFill] } : {}),
-  };
+  const dripLineAnimate = isJointTearDrip
+    ? { opacity: [...jointLineOpacity] }
+    : {
+        opacity: [0, 1, 1, 1, 1, 0],
+        ...(whiteBlink ? { stroke: [...blinkFill] } : {}),
+      };
 
-  const dripLineTransition = {
-    opacity: dripTransition,
-    stroke: whiteBlink && !isNieblaDrip ? petroleoVBlinkTransition : dripTransition,
-  };
+  const dripLineTransition = isJointTearDrip
+    ? {
+        opacity: isLineDrip ? lineOpacityTransition : dripTransition,
+        ...(isLineDrip
+          ? { x2: lineRetractSync, y2: lineRetractSync }
+          : { d: dripTransition }),
+      }
+    : {
+        opacity: dripTransition,
+        stroke: whiteBlink ? petroleoVBlinkTransition : dripTransition,
+      };
 
-  const dripLine = (
+  const dripLine = isLineDrip ? (
+    <motion.line
+      x1={lineJoint.x}
+      y1={lineJoint.y}
+      stroke={isSelvaDrip ? camoInk : dripColor}
+      strokeWidth={jointLineWidth}
+      strokeLinecap={jointLineCap}
+      shapeRendering="geometricPrecision"
+      animate={{
+        x2: [...lineTrailX2],
+        y2: [...lineTrailY2],
+        opacity: [...jointLineOpacity],
+        ...(isSelvaDrip ? { stroke: [...selvaDripFill] } : {}),
+      }}
+      transition={{
+        ...dripLineTransition,
+        ...(isSelvaDrip ? { stroke: selvaDripTransition } : {}),
+      }}
+    />
+  ) : (
     <motion.path
       fill="none"
-      stroke={whiteBlink && !isNieblaDrip ? undefined : dripColor}
-      strokeWidth={DRIP_LINE_W}
-      strokeLinecap={isNieblaDrip ? "butt" : "round"}
+      stroke={whiteBlink && !isJointTearDrip ? undefined : dripColor}
+      strokeWidth={isJointTearDrip ? jointLineWidth : DRIP_LINE_W}
+      strokeLinecap={isJointTearDrip ? jointLineCap : "round"}
       shapeRendering="geometricPrecision"
       animate={{
         d: [...dripPaths],
@@ -495,25 +1047,96 @@ export function HelechoNeonV({
     />
   );
 
-  const dripDrop = (
-    <motion.circle
-      cx={dripDropCx ? dripDropCx[0] : FONT_TIP_X}
-      cy={dripDropCy[0]}
-      r={DRIP_DROP_R_ANIM[0]}
-      fill={whiteBlink && !isNieblaDrip ? undefined : dripColor}
+  const dripDrop = isSelvaDrip ? (
+    <motion.g
+      style={{ transformOrigin: "0px 0px" }}
       animate={{
-        ...(dripDropCx ? { cx: [...dripDropCx] } : {}),
-        cy: [...dripDropCy],
-        r: [...DRIP_DROP_R_ANIM],
-        opacity: [0, 1, 1, 1, 1, 0],
-        ...(whiteBlink && !isNieblaDrip ? { fill: [...blinkFill] } : {}),
+        x: [...SELVA_DROP_X],
+        y: [...selvaDropYAnim],
+        rotate: [...SELVA_DROP_ROTATE],
+        scaleX: [...SELVA_SCALE_X],
+        scaleY: [...SELVA_SCALE_Y],
+        opacity: [...SELVA_DROP_OPACITY],
       }}
       transition={{
-        ...(dripDropCx ? { cx: dripTransition } : {}),
+        x: selvaFallSyncTransition,
+        y: selvaFallSyncTransition,
+        rotate: selvaDripEaseTransition,
+        scaleX: selvaScaleGrowTransition,
+        scaleY: selvaScaleGrowTransition,
+        opacity: selvaDripTransition,
+      }}
+    >
+      <motion.path
+        d={SELVA_DROP_LOCAL}
+        fill={dropInk}
+        shapeRendering="geometricPrecision"
+        animate={{
+          opacity: [...SELVA_PATH_OPACITY],
+          fill: [...selvaDripFill],
+        }}
+        transition={{ opacity: selvaDripTransition, fill: selvaDripTransition }}
+      />
+    </motion.g>
+  ) : isPinoDrip ? (
+    <motion.g
+      style={{ transformOrigin: "0 0", transformBox: "fill-box" as const }}
+      animate={{
+        x: [...PINO_DROP_X],
+        y: [...PINO_DROP_Y],
+        scale: [...PINO_DROP_SCALE],
+        opacity: [...PINO_DROP_OPACITY],
+      }}
+      transition={{
+        x: pinoFallSyncTransition,
+        y: pinoFallSyncTransition,
+        scale: dripTransition,
+        opacity: lineOpacityTransition,
+      }}
+    >
+      <path d={PINO_DROP_LOCAL} fill={dripColor} shapeRendering="geometricPrecision" />
+    </motion.g>
+  ) : dripVariant === "niebla" ? (
+    <motion.g
+      style={{ transformOrigin: "0 0", transformBox: "fill-box" as const }}
+      animate={{
+        x: [...NIEBLA_TEAR_X],
+        y: [...NIEBLA_TEAR_Y],
+        scale: [...NIEBLA_TEAR_SCALES],
+        opacity: [...NIEBLA_TEAR_OPACITY],
+      }}
+      transition={{
+        x: dripTransition,
+        y: dripTransition,
+        scale: dripTransition,
+        opacity: dripTransition,
+      }}
+    >
+      <path
+        d={NIEBLA_TEAR_LOCAL}
+        fill={dripColor}
+        stroke={tearStroke}
+        strokeWidth={1.5}
+        shapeRendering="geometricPrecision"
+      />
+    </motion.g>
+  ) : (
+    <motion.circle
+      cx={FONT_TIP_X}
+      cy={DRIP_DROP_CY[0]}
+      r={DRIP_DROP_R_ANIM[0]}
+      fill={whiteBlink ? undefined : dripColor}
+      animate={{
+        cy: [...DRIP_DROP_CY],
+        r: [...DRIP_DROP_R_ANIM],
+        opacity: [0, 1, 1, 1, 1, 0],
+        ...(whiteBlink ? { fill: [...blinkFill] } : {}),
+      }}
+      transition={{
         cy: dripTransition,
         r: dripTransition,
         opacity: dripTransition,
-        fill: whiteBlink && !isNieblaDrip ? petroleoVBlinkTransition : dripTransition,
+        fill: whiteBlink ? petroleoVBlinkTransition : dripTransition,
       }}
     />
   );
@@ -524,11 +1147,11 @@ export function HelechoNeonV({
       aria-hidden
       style={{
         display: "inline-block",
-        width: `${HELECHO_V_ADVANCE / HELECHO_V_UPEM}em`,
-        height: `${HELECHO_V_INK_H / HELECHO_V_UPEM}em`,
+        width: `${HELECHO_V_WIDTH_EM}em`,
+        height: `${HELECHO_V_HEIGHT_EM}em`,
         verticalAlign: "baseline",
         overflow: "visible",
-        transform: "translateY(10px)",
+        transform: mobile ? "translateY(5px)" : "translateY(10px)",
       }}
       animate={whiteBlink ? premiumVBlinkSvgAnimate(halo) : helechoVAnimate()}
       transition={
@@ -544,7 +1167,7 @@ export function HelechoNeonV({
       }
     >
       <g transform={`translate(0, -12) ${HELECHO_V_FLIP}`}>
-        {!isNieblaDrip && dripLine}
+        {!isJointTearDrip && dripLine}
         <motion.path
           d={HELECHO_V_PATH}
           fill={whiteBlink ? undefined : color}
@@ -552,7 +1175,7 @@ export function HelechoNeonV({
           animate={whiteBlink ? { fill: [...blinkFill] } : undefined}
           transition={whiteBlink ? { fill: petroleoVBlinkTransition } : undefined}
         />
-        {isNieblaDrip && dripLine}
+        {isJointTearDrip && dripLine}
         {dripDrop}
       </g>
     </motion.svg>
@@ -576,6 +1199,121 @@ export function HelechoChartreuseCredit({ color = HELECHO_CYAN }: { color?: stri
     >
       Nazareth Montés
     </p>
+  );
+}
+
+/** Crédito sincronizado con la gota (estilo Selva; color vía prop) */
+export function SelvaDropCredit({
+  color = RAIZ_OXIDO,
+  fontFamily = SELVA_CREDIT_FONT,
+  fontStyle = "italic",
+  fontWeight = 400,
+  letterSpacing,
+  nudgeXOffsetPx = 0,
+}: {
+  color?: string;
+  fontFamily?: string;
+  fontStyle?: "normal" | "italic";
+  fontWeight?: number;
+  letterSpacing?: string;
+  nudgeXOffsetPx?: number;
+}) {
+  const mobile = useIsMobile();
+  const creditNudgeXPx = (mobile ? 20 : 22) + nudgeXOffsetPx;
+  const creditNudgeX = mobile
+    ? `calc(${SELVA_CREDIT_NUDGE_X_BASE} + ${creditNudgeXPx}px - 0.36em)`
+    : `calc(${SELVA_CREDIT_NUDGE_X_BASE} + ${creditNudgeXPx}px)`;
+  const creditNudgeY = mobile ? "calc(-1.12em - 1px)" : "calc(-1.12em - 5px)";
+
+  const creditScaleX = mobile ? SELVA_CREDIT_SCALE_X.mobile : SELVA_CREDIT_SCALE_X.desktop;
+  const creditLetterSpacing =
+    letterSpacing ?? (mobile ? "0.03em" : "0.05em");
+
+  const creditStyle = {
+    margin: 0,
+    fontFamily,
+    fontStyle,
+    fontWeight,
+    fontSize: DROP_CREDIT_FONT_SIZE,
+    letterSpacing: creditLetterSpacing,
+    textTransform: "uppercase" as const,
+    color,
+    textAlign: "center" as const,
+    whiteSpace: "nowrap" as const,
+  };
+
+  return (
+    <div
+      style={{
+        alignSelf: "center",
+        marginTop: SELVA_CREDIT_MARGIN_TOP,
+        transform: `translate(${creditNudgeX}, ${creditNudgeY}) scaleX(${creditScaleX})`,
+        transformOrigin: "center center",
+        position: "relative",
+        zIndex: 1,
+      }}
+    >
+      <motion.p
+        style={creditStyle}
+        animate={{ opacity: [0, 0, 1, 1, 0] }}
+        transition={{
+          duration: SELVA_DRIP_DURATION,
+          repeat: Infinity,
+          repeatDelay: 0.5,
+          ease: "linear",
+          times: [0, SELVA_T_BOTTOM, SELVA_T_BOTTOM, SELVA_T_HOLD_END, 1],
+        }}
+      >
+        Naz Mont
+        <span
+          aria-label="é"
+          style={{
+            position: "relative",
+            display: "inline-block",
+            paddingTop: "0.32em",
+          }}
+        >
+          e
+        </span>
+        s
+      </motion.p>
+    </div>
+  );
+}
+
+/** Raíz Pino — justo debajo del punto donde acaba la gota */
+export function PinoDropCredit({ color = HELECHO_CYAN }: { color?: string }) {
+  return (
+    <div
+      style={{
+        alignSelf: "center",
+        marginTop: PINO_CREDIT_MARGIN_TOP,
+        transform: "translate(90px, -30px)",
+      }}
+    >
+      <motion.p
+        style={{
+          margin: 0,
+          fontFamily: HELECHO_FONTS.body,
+          fontWeight: 500,
+          fontSize: "clamp(23.6px, 2.95vw, 63px)",
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          color,
+          textAlign: "center",
+        }}
+        animate={{ opacity: [0, 0, 1, 1, 0] }}
+        transition={{
+          duration: PINO_DRIP_DURATION,
+          repeat: Infinity,
+          repeatDelay: 0.5,
+          ease: "linear",
+          times: [0, PINO_T_ARRIVE - 0.0001, PINO_T_ARRIVE, PINO_T_HOLD_END, 1],
+        }}
+      >
+        Naz Montés
+      </motion.p>
+    </div>
   );
 }
 
@@ -1065,15 +1803,44 @@ export function CoverTitle({
           />
         );
       }
-      if (palette === "raiz_helecho" || palette === "raiz_petroleo" || palette === "raiz_niebla") {
+      if (
+        palette === "raiz" ||
+        palette === "raiz_helecho" ||
+        palette === "raiz_petroleo" ||
+        palette === "raiz_niebla" ||
+        palette === "raiz_pino"
+      ) {
+        const isSelva = palette === "raiz";
+        const isHelechoPalette = palette === "raiz_helecho";
         const isNiebla = palette === "raiz_niebla";
+        const isPino = palette === "raiz_pino";
+        const jointTear = isNiebla || isPino || isSelva;
+        const useSelvaDrip = isSelva || isHelechoPalette;
+        const darkTitle = isNiebla || isPino;
+        const titleInk = theme.titleLetters ?? theme.text ?? NIEBLA_BLACK;
+        const selvaInk = theme.titleLetters ?? RAIZ_OXIDO;
         return (
           <HelechoTitleRow
-            letterColor={theme.titleLetters ?? HELECHO_CYAN}
-            whiteBlink={palette === "raiz_petroleo" || isNiebla}
-            vColor={isNiebla ? (theme.titleLetters ?? theme.text ?? HELECHO_CYAN) : HELECHO_CYAN}
-            halo={isNiebla ? "black" : "cyan"}
-            dripVariant={isNiebla ? "niebla" : "helecho"}
+            letterColor={darkTitle ? titleInk : selvaInk}
+            whiteBlink={palette === "raiz_petroleo" || (jointTear && !isHelechoPalette)}
+            vColor={darkTitle ? titleInk : selvaInk}
+            halo={darkTitle || isSelva ? "black" : "cyan"}
+            dripVariant={isPino ? "pino" : useSelvaDrip ? "selva" : jointTear ? "niebla" : "helecho"}
+            scaleX={
+              isSelva
+                ? SELVA_TITLE_SCALE_X
+                : isHelechoPalette
+                  ? HELECHO_TITLE_SCALE_X
+                  : jointTear
+                    ? NIEBLA_TITLE_SCALE_X
+                    : undefined
+            }
+            jointTearColor={
+              isPino ? NIEBLA_BLACK : isNiebla ? MEZCLA_RED : isSelva ? RAIZ_OXIDO : undefined
+            }
+            jointTearStroke={isPino ? "#052525" : isSelva ? "#3D2E24" : undefined}
+            selvaCamoInk={isHelechoPalette ? HELECHO_BG : undefined}
+            selvaDropInk={isHelechoPalette ? HELECHO_CYAN : undefined}
           />
         );
       }

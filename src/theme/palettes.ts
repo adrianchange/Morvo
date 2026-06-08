@@ -133,16 +133,19 @@ export function isRaizPremium(theme: { id: PaletteId }): boolean {
     theme.id === "raiz_esmeralda" ||
     theme.id === "raiz_helecho" ||
     theme.id === "raiz_petroleo" ||
-    theme.id === "raiz_niebla"
+    theme.id === "raiz_niebla" ||
+    theme.id === "raiz_pino"
   );
 }
 
 /** Mismos estilos que Raíz Helecho (layout, tipografía Killing, V con chorreo) */
 export function isHelechoStyle(theme: { id: PaletteId }): boolean {
   return (
+    theme.id === "raiz" ||
     theme.id === "raiz_helecho" ||
     theme.id === "raiz_petroleo" ||
-    theme.id === "raiz_niebla"
+    theme.id === "raiz_niebla" ||
+    theme.id === "raiz_pino"
   );
 }
 
@@ -283,14 +286,15 @@ export const PALETTES: Record<PaletteId, PaletteTheme> = {
     id: "raiz_pino",
     label: "Raíz Pino",
     greenLabel: "pino",
-    greenDark: GREEN_PINO,
-    greenLight: GREEN_PINO_LIGHT,
-    accent: RAIZ_OXIDO,
-    line: GREEN_PINO_LIGHT,
-    bg: GREEN_PINO,
-    text: GREEN_PINO_LIGHT,
-    titleLetters: GREEN_PINO_LIGHT,
-    titleV: GREEN_PINO,
+    greenDark: NIEBLA_BLACK,
+    greenLight: NIEBLA_BLACK,
+    accent: NIEBLA_BLACK,
+    line: NIEBLA_BLACK,
+    fonts: HELECHO_FONTS,
+    bg: HELECHO_CYAN,
+    text: NIEBLA_BLACK,
+    titleLetters: NIEBLA_BLACK,
+    titleV: HELECHO_CYAN,
   },
   raiz_petroleo: {
     id: "raiz_petroleo",

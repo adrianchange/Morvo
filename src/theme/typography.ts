@@ -38,6 +38,18 @@ export const HELECHO_TITLE_STYLE = {
   textTransform: "uppercase" as const,
 };
 
+/** Raíz Selva — crédito portada (solo subtítulo) */
+export const SELVA_CREDIT_FONT = "'Bodoni Moda', serif";
+
+/** Raíz Niebla — estira el título en horizontal (misma altura, más presencia en portada) */
+export const NIEBLA_TITLE_SCALE_X = 1.14;
+
+/** Raíz Selva — un poco más ancho que Niebla/Pino */
+export const SELVA_TITLE_SCALE_X = 1.34;
+
+/** Raíz Helecho — estiramiento horizontal del título MORVO */
+export const HELECHO_TITLE_SCALE_X = 1.26;
+
 type ThemeWithFonts = { fonts?: PaletteFonts };
 
 export function paletteFonts(theme: ThemeWithFonts): PaletteFonts {

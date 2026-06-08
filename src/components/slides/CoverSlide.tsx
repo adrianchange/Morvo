@@ -3,7 +3,8 @@ import { motion } from "motion/react";
 import type { PaletteTheme } from "../../theme/palettes";
 
 import { isHelechoStyle, isRaizPremium, slideText } from "../../theme/palettes";
-import { HELECHO_TITLE_FONT_SIZE, HELECHO_TITLE_STYLE } from "../../theme/typography";
+import { HELECHO_TITLE_FONT_SIZE, HELECHO_TITLE_STYLE, SELVA_CREDIT_FONT } from "../../theme/typography";
+import { useIsMobile } from "../../hooks/useIsMobile";
 
 import {
   GREEN_PINO,
@@ -16,6 +17,10 @@ import {
   CoverTitle,
   EsmeraldaSalmonCredit,
   HelechoChartreuseCredit,
+  PinoDropCredit,
+  SelvaDropCredit,
+  DROP_CREDIT_FONT_SIZE,
+  DROP_CREDIT_SCALE_X,
   InvertidaCredit,
   RaizCredit,
   TierraCredit,
@@ -679,10 +684,16 @@ function HospitalCover({ theme }: CoverSlideProps) {
 /** Portada Raíz: bosque salvaje + crédito óxido, centrado */
 function RaizCover({ theme }: CoverSlideProps) {
   const fg = slideText(theme);
+  const mobile = useIsMobile();
   const lineGrad = `linear-gradient(90deg, transparent, ${fg} 30%, ${fg} 70%, transparent)`;
 
   const premium = isRaizPremium(theme);
   const isHelecho = isHelechoStyle(theme);
+  const isSelva = theme.id === "raiz";
+  const isHelechoPalette = theme.id === "raiz_helecho";
+  const isPino = theme.id === "raiz_pino";
+  const useSelvaDropCredit = isSelva || isHelechoPalette;
+  const titleCreditGap = isPino || useSelvaDropCredit ? 0 : "clamp(20px, 3.5vh, 40px)";
 
   return (
     <div style={{ ...slideRootStyle(theme), overflow: isHelecho ? "visible" : undefined }}>
@@ -696,15 +707,29 @@ function RaizCover({ theme }: CoverSlideProps) {
             right: 0,
             textAlign: "center",
             zIndex: 30,
-            fontFamily: isHelecho
-              ? fontDisplay(theme)
-              : "'Cormorant Garamond', serif",
-            fontStyle: isHelecho ? "normal" : "italic",
-            fontWeight: isHelecho ? 500 : undefined,
-            fontSize: "clamp(23.6px, 2.95vw, 63px)",
-            letterSpacing: isHelecho ? "0.08em" : "0.11em",
-            textTransform: isHelecho ? "uppercase" : undefined,
-            color: isHelecho ? fg : "#FA8072",
+            ...(isHelechoPalette
+              ? {
+                  fontFamily: SELVA_CREDIT_FONT,
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                  fontSize: DROP_CREDIT_FONT_SIZE,
+                  letterSpacing: mobile ? "0.03em" : "0.05em",
+                  textTransform: "uppercase",
+                  color: fg,
+                  transform: `scaleX(${mobile ? DROP_CREDIT_SCALE_X.mobile : DROP_CREDIT_SCALE_X.desktop})`,
+                  transformOrigin: "center center",
+                }
+              : {
+                  fontFamily: isHelecho
+                    ? fontDisplay(theme)
+                    : "'Cormorant Garamond', serif",
+                  fontStyle: isHelecho ? "normal" : "italic",
+                  fontWeight: isHelecho ? 500 : undefined,
+                  fontSize: "clamp(23.6px, 2.95vw, 63px)",
+                  letterSpacing: isHelecho ? "0.08em" : "0.11em",
+                  textTransform: isHelecho ? "uppercase" : undefined,
+                  color: isHelecho ? fg : "#FA8072",
+                }),
           }}
         >
           Compañía OBSCENA Teatral
@@ -747,7 +772,7 @@ function RaizCover({ theme }: CoverSlideProps) {
           justifyContent: "center",
           padding: "clamp(24px, 6vh, 88px) clamp(20px, 6vw, 140px)",
           boxSizing: "border-box",
-          gap: "clamp(20px, 3.5vh, 40px)",
+          gap: titleCreditGap,
           textAlign: "center",
         }}
       >
@@ -757,8 +782,9 @@ function RaizCover({ theme }: CoverSlideProps) {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: "clamp(20px, 3.5vh, 40px)",
-            width: "min(100%, 820px)",
+            justifyContent: "center",
+            gap: titleCreditGap,
+            width: isSelva ? "100%" : "min(100%, 820px)",
             overflow: isHelecho ? "visible" : undefined,
           }}
         >
@@ -769,12 +795,15 @@ function RaizCover({ theme }: CoverSlideProps) {
             style={{
               display: "flex",
               justifyContent: "center",
+              alignItems: "center",
+              width: "100%",
               fontFamily: fontDisplay(theme),
               fontSize: isHelecho
                 ? HELECHO_TITLE_FONT_SIZE
                 : "clamp(60px, 11vw, 170px)",
               userSelect: "none",
               overflow: "visible",
+              ...(isSelva ? { position: "relative", zIndex: 2 } : {}),
               ...(isHelecho
                 ? HELECHO_TITLE_STYLE
                 : { fontWeight: 900, lineHeight: 1 }),
@@ -784,6 +813,13 @@ function RaizCover({ theme }: CoverSlideProps) {
           </motion.div>
           {theme.id === "raiz_esmeralda" ? (
             <EsmeraldaSalmonCredit />
+          ) : theme.id === "raiz_pino" ? (
+            <PinoDropCredit color={fg} />
+          ) : useSelvaDropCredit ? (
+            <SelvaDropCredit
+              color={isSelva ? (theme.titleLetters ?? fg) : fg}
+              nudgeXOffsetPx={isHelechoPalette ? -2 : 0}
+            />
           ) : isHelecho ? (
             <HelechoChartreuseCredit color={fg} />
           ) : (

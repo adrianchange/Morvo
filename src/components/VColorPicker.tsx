@@ -25,7 +25,7 @@ const RAIZ_OPTIONS: {
   description: string;
 }[] = [
   { id: "raiz", label: "RAÍZ SELVA", description: "Selva · vínculo óxido" },
-  { id: "raiz_pino", label: "RAÍZ PINO", description: "Pino · vínculo óxido" },
+  { id: "raiz_pino", label: "RAÍZ PINO", description: "Helecho · negro · lágrima cian" },
   { id: "raiz_petroleo", label: "RAÍZ PETRÓLEO", description: "Cian Killing Eve · título serie" },
   { id: "raiz_helecho", label: "RAÍZ HELECHO", description: "Cian Killing Eve · título serie" },
   { id: "raiz_niebla", label: "RAÍZ NIEBLA", description: "Rojo · negro Killing Eve" },
