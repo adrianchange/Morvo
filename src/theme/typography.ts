@@ -38,11 +38,37 @@ export const HELECHO_TITLE_STYLE = {
   textTransform: "uppercase" as const,
 };
 
-/** Raíz Selva — crédito portada (solo subtítulo) */
+/** Raíz Selva — crédito portada (subtítulo «Naz Montés» en todas las paletas) */
 export const SELVA_CREDIT_FONT = "'Bodoni Moda', serif";
 
-/** Raíz Niebla — estira el título en horizontal (misma altura, más presencia en portada) */
-export const NIEBLA_TITLE_SCALE_X = 1.14;
+/** Tamaño y compresión del subtítulo (referencia Selva) */
+export const DROP_CREDIT_FONT_SIZE = "clamp(15px, 2vw, 42px)";
+export const DROP_CREDIT_SCALE_X = { mobile: 0.78, desktop: 0.86 } as const;
+
+export function dropCreditLetterSpacing(mobile: boolean) {
+  return mobile ? "0.03em" : "0.05em";
+}
+
+export function dropCreditScaleX(mobile: boolean) {
+  return mobile ? DROP_CREDIT_SCALE_X.mobile : DROP_CREDIT_SCALE_X.desktop;
+}
+
+/** Raíz Pino — estiramiento horizontal compartido con Niebla (valor histórico) */
+export const PINO_TITLE_SCALE_X = 1.14;
+
+/** Raíz Niebla — más presencia en portada, cercano a Esmeralda */
+export const NIEBLA_TITLE_SCALE_X = 1.38;
+export const NIEBLA_TITLE_LETTER_GAP = "0.07em";
+/** Killing condensada: px mayor que Helecho para compensar Cinzel 900 de Esmeralda */
+export const NIEBLA_TITLE_FONT_SIZE = "clamp(105px, 18.5vw, 295px)";
+
+/** Raíz Esmeralda — referencia de presencia del título MORVO en portada */
+export const ESMERALDA_TITLE_FONT_SIZE = "clamp(60px, 11vw, 170px)";
+export const ESMERALDA_TITLE_LETTER_GAP = "0.18em";
+
+/** Raíz Petróleo — Killing compensada para igualar huella visual de Esmeralda (Cinzel 900) */
+export const PETROLEO_TITLE_FONT_SIZE = "clamp(75px, 13.75vw, 212px)";
+export const PETROLEO_TITLE_SCALE_X = 1.08;
 
 /** Raíz Selva — un poco más ancho que Niebla/Pino */
 export const SELVA_TITLE_SCALE_X = 1.34;

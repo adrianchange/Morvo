@@ -34,6 +34,10 @@ import {
 
   GREEN_PINO_LIGHT,
 
+  COPPER_AUTUMN_LEAF,
+
+  GREEN_FOREST_TERROSO,
+
   GREEN_RAIZ_BOSQUE,
 
   MEZCLA_RED,
@@ -57,7 +61,9 @@ export type PaletteId =
   | "raiz_petroleo"
   | "raiz_helecho"
   | "raiz_niebla"
-  | "raiz_esmeralda";
+  | "raiz_esmeralda"
+  | "raiz_forest"
+  | "raiz_black";
 
 
 
@@ -142,11 +148,23 @@ export function isRaizPremium(theme: { id: PaletteId }): boolean {
 export function isHelechoStyle(theme: { id: PaletteId }): boolean {
   return (
     theme.id === "raiz" ||
+    theme.id === "raiz_forest" ||
+    theme.id === "raiz_black" ||
     theme.id === "raiz_helecho" ||
     theme.id === "raiz_petroleo" ||
     theme.id === "raiz_niebla" ||
     theme.id === "raiz_pino"
   );
+}
+
+/** Raíz Selva y variantes (chorreo gota Selva, crédito sincronizado) */
+export function isSelvaStyle(id: PaletteId): boolean {
+  return id === "raiz" || id === "raiz_forest" || id === "raiz_black";
+}
+
+/** Slide 08 — vídeo teaser animado (todas las paletas Raíz) */
+export function hasTeaserVideo(id: PaletteId): boolean {
+  return id.startsWith("raiz");
 }
 
 
@@ -350,6 +368,32 @@ export const PALETTES: Record<PaletteId, PaletteTheme> = {
     text: "#FA8072",
     titleLetters: "#FA8072",
     titleV: GREEN_PINO,
+  },
+  raiz_forest: {
+    id: "raiz_forest",
+    label: "Raíz Forest",
+    greenLabel: "forest",
+    greenDark: GREEN_FOREST_TERROSO,
+    greenLight: COPPER_AUTUMN_LEAF,
+    accent: COPPER_AUTUMN_LEAF,
+    line: COPPER_AUTUMN_LEAF,
+    bg: GREEN_FOREST_TERROSO,
+    text: COPPER_AUTUMN_LEAF,
+    titleLetters: COPPER_AUTUMN_LEAF,
+    titleV: GREEN_FOREST_TERROSO,
+  },
+  raiz_black: {
+    id: "raiz_black",
+    label: "Raíz Black",
+    greenLabel: "forest",
+    greenDark: GREEN_FOREST_TERROSO,
+    greenLight: NIEBLA_BLACK,
+    accent: NIEBLA_BLACK,
+    line: NIEBLA_BLACK,
+    bg: GREEN_FOREST_TERROSO,
+    text: NIEBLA_BLACK,
+    titleLetters: NIEBLA_BLACK,
+    titleV: GREEN_FOREST_TERROSO,
   },
 };
 

@@ -25,6 +25,8 @@ const RAIZ_OPTIONS: {
   description: string;
 }[] = [
   { id: "raiz", label: "RAÍZ SELVA", description: "Selva · vínculo óxido" },
+  { id: "raiz_forest", label: "RAÍZ FOREST", description: "Forest terroso · hoja otoñal" },
+  { id: "raiz_black", label: "RAÍZ BLACK", description: "Forest terroso · negro" },
   { id: "raiz_pino", label: "RAÍZ PINO", description: "Helecho · negro · lágrima cian" },
   { id: "raiz_petroleo", label: "RAÍZ PETRÓLEO", description: "Cian Killing Eve · título serie" },
   { id: "raiz_helecho", label: "RAÍZ HELECHO", description: "Cian Killing Eve · título serie" },
@@ -114,7 +116,7 @@ export function VColorPicker({ onSelect }: Props) {
               textAlign: "center",
             }}
           >
-            Versiones originales + Raíz en seis verdes
+            Versiones originales + Raíz en ocho verdes
           </div>
         </div>
 

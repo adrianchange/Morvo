@@ -2,9 +2,18 @@ import { motion } from "motion/react";
 
 import type { PaletteTheme } from "../../theme/palettes";
 
-import { isHelechoStyle, isRaizPremium, slideText } from "../../theme/palettes";
-import { HELECHO_TITLE_FONT_SIZE, HELECHO_TITLE_STYLE, SELVA_CREDIT_FONT } from "../../theme/typography";
-import { useIsMobile } from "../../hooks/useIsMobile";
+import { isHelechoStyle, isSelvaStyle, slideText } from "../../theme/palettes";
+import {
+  ESMERALDA_TITLE_FONT_SIZE,
+  HELECHO_TITLE_FONT,
+  HELECHO_TITLE_FONT_SIZE,
+  HELECHO_TITLE_SCALE_X,
+  HELECHO_TITLE_STYLE,
+  NIEBLA_TITLE_FONT_SIZE,
+  PETROLEO_TITLE_FONT_SIZE,
+  SELVA_TITLE_SCALE_X,
+} from "../../theme/typography";
+import { useCoverCreditTypography } from "../../hooks/useCoverCreditTypography";
 
 import {
   GREEN_PINO,
@@ -15,12 +24,14 @@ import {
 
 import {
   CoverTitle,
+  CoverCreditWrap,
   EsmeraldaSalmonCredit,
   HelechoChartreuseCredit,
+  NieblaDropCredit,
+  ObscenaTeatralHeader,
+  PetroleoCredit,
   PinoDropCredit,
   SelvaDropCredit,
-  DROP_CREDIT_FONT_SIZE,
-  DROP_CREDIT_SCALE_X,
   InvertidaCredit,
   RaizCredit,
   TierraCredit,
@@ -85,6 +96,7 @@ function MezclaCoverSwap({ theme }: CoverSlideProps) {
   return (
     <div style={slideRootStyle(theme)}>
       <Grain light />
+      <ObscenaTeatralHeader color={fg} />
       <div
         style={{
           position: "absolute",
@@ -161,6 +173,7 @@ function MezclaCoverBand({ theme }: CoverSlideProps) {
   return (
     <div style={slideRootStyle(theme)}>
       <Grain light />
+      <ObscenaTeatralHeader color={text} />
 
       <div
         style={{
@@ -210,30 +223,6 @@ function MezclaCoverBand({ theme }: CoverSlideProps) {
       >
 
         01
-
-      </div>
-
-      <div
-
-        className="absolute top-6 right-8 z-20 text-right"
-
-        style={{
-
-          fontFamily: fontBody(theme),
-
-          color: text,
-
-          opacity: 0.5,
-
-          fontSize: "clamp(9px,0.9vw,13px)",
-
-          letterSpacing: "0.2em",
-
-        }}
-
-      >
-
-        [COMPAÑÍA PRODUCTORA]
 
       </div>
 
@@ -470,52 +459,47 @@ const LIT_NEON_MID = "rgba(100,255,190,0.95)";
 const LIT_NEON_DIM = "rgba(26,58,63,0.35)";
 
 function LiturgicoNeonCredit() {
+  const { textStyle } = useCoverCreditTypography(GREEN_PINO_LIGHT);
   return (
-    <motion.p
-      style={{
-        margin: 0,
-        fontFamily: "'Cormorant Garamond', serif",
-        fontStyle: "italic",
-        fontSize: "clamp(18px, 2.25vw, 48px)",
-        letterSpacing: "0.22em",
-        textTransform: "lowercase",
-        color: GREEN_PINO_LIGHT,
-      }}
-      initial={{ opacity: 0 }}
-      animate={{
-        opacity: [1, 0.1, 1, 0.2, 1, 0.04, 1, 0.35, 1, 0.08, 1],
-        color: [
-          GREEN_PINO_LIGHT,
-          "#E8F2E8",
-          GREEN_PINO,
-          GREEN_PINO_LIGHT,
-          "#D4E0D0",
-          GREEN_PINO_LIGHT,
-          "#B8D4C4",
-          GREEN_PINO_LIGHT,
-        ],
-        textShadow: [
-          `0 0 14px ${LIT_NEON_BRIGHT}, 0 0 30px ${LIT_NEON_MID}, 0 0 55px ${LIT_NEON_MID}`,
-          `0 0 4px ${LIT_NEON_DIM}`,
-          `0 0 22px ${LIT_NEON_BRIGHT}, 0 0 44px ${LIT_NEON_MID}, 0 0 75px rgba(100,255,190,0.65)`,
-          `0 0 6px ${LIT_NEON_DIM}`,
-          `0 0 18px ${LIT_NEON_BRIGHT}, 0 0 36px ${LIT_NEON_MID}, 0 0 60px ${LIT_NEON_MID}`,
-          `0 0 5px ${LIT_NEON_DIM}`,
-          `0 0 26px ${LIT_NEON_BRIGHT}, 0 0 50px ${LIT_NEON_MID}`,
-          `0 0 8px ${LIT_NEON_DIM}`,
-          `0 0 16px ${LIT_NEON_BRIGHT}, 0 0 38px ${LIT_NEON_MID}`,
-          `0 0 6px ${LIT_NEON_DIM}`,
-          `0 0 20px ${LIT_NEON_BRIGHT}, 0 0 42px ${LIT_NEON_MID}`,
-        ],
-      }}
-      transition={{
-        opacity: { ...litNeonBlinkTransition, delay: 0.8 },
-        color: litNeonBlinkTransition,
-        textShadow: litNeonBlinkTransition,
-      }}
-    >
-      por Nazaret Montes
-    </motion.p>
+    <CoverCreditWrap>
+      <motion.p
+        style={textStyle}
+        initial={{ opacity: 0 }}
+        animate={{
+          opacity: [1, 0.1, 1, 0.2, 1, 0.04, 1, 0.35, 1, 0.08, 1],
+          color: [
+            GREEN_PINO_LIGHT,
+            "#E8F2E8",
+            GREEN_PINO,
+            GREEN_PINO_LIGHT,
+            "#D4E0D0",
+            GREEN_PINO_LIGHT,
+            "#B8D4C4",
+            GREEN_PINO_LIGHT,
+          ],
+          textShadow: [
+            `0 0 14px ${LIT_NEON_BRIGHT}, 0 0 30px ${LIT_NEON_MID}, 0 0 55px ${LIT_NEON_MID}`,
+            `0 0 4px ${LIT_NEON_DIM}`,
+            `0 0 22px ${LIT_NEON_BRIGHT}, 0 0 44px ${LIT_NEON_MID}, 0 0 75px rgba(100,255,190,0.65)`,
+            `0 0 6px ${LIT_NEON_DIM}`,
+            `0 0 18px ${LIT_NEON_BRIGHT}, 0 0 36px ${LIT_NEON_MID}, 0 0 60px ${LIT_NEON_MID}`,
+            `0 0 5px ${LIT_NEON_DIM}`,
+            `0 0 26px ${LIT_NEON_BRIGHT}, 0 0 50px ${LIT_NEON_MID}`,
+            `0 0 8px ${LIT_NEON_DIM}`,
+            `0 0 16px ${LIT_NEON_BRIGHT}, 0 0 38px ${LIT_NEON_MID}`,
+            `0 0 6px ${LIT_NEON_DIM}`,
+            `0 0 20px ${LIT_NEON_BRIGHT}, 0 0 42px ${LIT_NEON_MID}`,
+          ],
+        }}
+        transition={{
+          opacity: { ...litNeonBlinkTransition, delay: 0.8 },
+          color: litNeonBlinkTransition,
+          textShadow: litNeonBlinkTransition,
+        }}
+      >
+        Naz Montés
+      </motion.p>
+    </CoverCreditWrap>
   );
 }
 
@@ -528,96 +512,88 @@ const MEZ_BLACK_GLOW = "rgba(0,0,0,0.85)";
 const MEZ_BLACK_GLOW_MID = "rgba(10,10,8,0.5)";
 
 function MezclaBlackCredit() {
+  const { textStyle } = useCoverCreditTypography(MEZ_BLACK);
   return (
-    <motion.p
-      style={{
-        margin: 0,
-        fontFamily: "'Cormorant Garamond', serif",
-        fontStyle: "italic",
-        fontSize: "clamp(18px, 2.25vw, 48px)",
-        letterSpacing: "0.22em",
-        textTransform: "lowercase",
-        color: MEZ_BLACK,
-      }}
-      initial={{ opacity: 0 }}
-      animate={{
-        opacity: [1, 0.1, 1, 0.2, 1, 0.04, 1, 0.35, 1, 0.08, 1],
-        color: [MEZ_BLACK, "#1A1A16", MEZ_BLACK, "#121210", MEZ_BLACK, "#222220", MEZ_BLACK],
-        textShadow: [
-          `0 0 16px ${MEZ_BLACK_GLOW}, 0 0 32px ${MEZ_BLACK_GLOW_MID}`,
-          `0 0 4px rgba(0,0,0,0.25)`,
-          `0 0 24px ${MEZ_BLACK_GLOW}, 0 0 44px ${MEZ_BLACK_GLOW_MID}`,
-          `0 0 6px rgba(0,0,0,0.2)`,
-          `0 0 20px ${MEZ_BLACK_GLOW}, 0 0 38px ${MEZ_BLACK_GLOW_MID}`,
-          `0 0 5px rgba(0,0,0,0.2)`,
-          `0 0 28px ${MEZ_BLACK_GLOW}, 0 0 48px ${MEZ_BLACK_GLOW_MID}`,
-        ],
-      }}
-      transition={{
-        opacity: { ...litNeonBlinkTransition, delay: 0.8 },
-        color: litNeonBlinkTransition,
-        textShadow: litNeonBlinkTransition,
-      }}
-    >
-      por Nazaret Montes
-    </motion.p>
+    <CoverCreditWrap>
+      <motion.p
+        style={textStyle}
+        initial={{ opacity: 0 }}
+        animate={{
+          opacity: [1, 0.1, 1, 0.2, 1, 0.04, 1, 0.35, 1, 0.08, 1],
+          color: [MEZ_BLACK, "#1A1A16", MEZ_BLACK, "#121210", MEZ_BLACK, "#222220", MEZ_BLACK],
+          textShadow: [
+            `0 0 16px ${MEZ_BLACK_GLOW}, 0 0 32px ${MEZ_BLACK_GLOW_MID}`,
+            `0 0 4px rgba(0,0,0,0.25)`,
+            `0 0 24px ${MEZ_BLACK_GLOW}, 0 0 44px ${MEZ_BLACK_GLOW_MID}`,
+            `0 0 6px rgba(0,0,0,0.2)`,
+            `0 0 20px ${MEZ_BLACK_GLOW}, 0 0 38px ${MEZ_BLACK_GLOW_MID}`,
+            `0 0 5px rgba(0,0,0,0.2)`,
+            `0 0 28px ${MEZ_BLACK_GLOW}, 0 0 48px ${MEZ_BLACK_GLOW_MID}`,
+          ],
+        }}
+        transition={{
+          opacity: { ...litNeonBlinkTransition, delay: 0.8 },
+          color: litNeonBlinkTransition,
+          textShadow: litNeonBlinkTransition,
+        }}
+      >
+        Naz Montés
+      </motion.p>
+    </CoverCreditWrap>
   );
 }
 
 function HospitalRedNeonCredit() {
+  const { textStyle } = useCoverCreditTypography(MEZCLA_RED);
   return (
-    <motion.p
-      style={{
-        margin: 0,
-        fontFamily: "'Cormorant Garamond', serif",
-        fontStyle: "italic",
-        fontSize: "clamp(18px, 2.25vw, 48px)",
-        letterSpacing: "0.22em",
-        textTransform: "lowercase",
-        color: MEZCLA_RED,
-      }}
-      initial={{ opacity: 0 }}
-      animate={{
-        opacity: [1, 0.1, 1, 0.2, 1, 0.04, 1, 0.35, 1, 0.08, 1],
-        color: [
-          MEZCLA_RED,
-          "#C44A58",
-          MEZCLA_RED,
-          "#9E2838",
-          MEZCLA_RED,
-          "#D45A6A",
-          MEZCLA_RED,
-        ],
-        textShadow: [
-          `0 0 14px ${HOSP_NEON_BRIGHT}, 0 0 30px ${HOSP_NEON_MID}, 0 0 50px ${HOSP_NEON_MID}`,
-          `0 0 4px ${HOSP_NEON_DIM}`,
-          `0 0 22px ${HOSP_NEON_BRIGHT}, 0 0 42px ${HOSP_NEON_MID}`,
-          `0 0 6px ${HOSP_NEON_DIM}`,
-          `0 0 18px ${HOSP_NEON_BRIGHT}, 0 0 36px ${HOSP_NEON_MID}`,
-          `0 0 5px ${HOSP_NEON_DIM}`,
-          `0 0 26px ${HOSP_NEON_BRIGHT}, 0 0 48px ${HOSP_NEON_MID}`,
-          `0 0 8px ${HOSP_NEON_DIM}`,
-          `0 0 20px ${HOSP_NEON_BRIGHT}, 0 0 40px ${HOSP_NEON_MID}`,
-        ],
-      }}
-      transition={{
-        opacity: { ...litNeonBlinkTransition, delay: 0.8 },
-        color: litNeonBlinkTransition,
-        textShadow: litNeonBlinkTransition,
-      }}
-    >
-      por nazaret montes
-    </motion.p>
+    <CoverCreditWrap>
+      <motion.p
+        style={textStyle}
+        initial={{ opacity: 0 }}
+        animate={{
+          opacity: [1, 0.1, 1, 0.2, 1, 0.04, 1, 0.35, 1, 0.08, 1],
+          color: [
+            MEZCLA_RED,
+            "#C44A58",
+            MEZCLA_RED,
+            "#9E2838",
+            MEZCLA_RED,
+            "#D45A6A",
+            MEZCLA_RED,
+          ],
+          textShadow: [
+            `0 0 14px ${HOSP_NEON_BRIGHT}, 0 0 30px ${HOSP_NEON_MID}, 0 0 50px ${HOSP_NEON_MID}`,
+            `0 0 4px ${HOSP_NEON_DIM}`,
+            `0 0 22px ${HOSP_NEON_BRIGHT}, 0 0 42px ${HOSP_NEON_MID}`,
+            `0 0 6px ${HOSP_NEON_DIM}`,
+            `0 0 18px ${HOSP_NEON_BRIGHT}, 0 0 36px ${HOSP_NEON_MID}`,
+            `0 0 5px ${HOSP_NEON_DIM}`,
+            `0 0 26px ${HOSP_NEON_BRIGHT}, 0 0 48px ${HOSP_NEON_MID}`,
+            `0 0 8px ${HOSP_NEON_DIM}`,
+            `0 0 20px ${HOSP_NEON_BRIGHT}, 0 0 40px ${HOSP_NEON_MID}`,
+          ],
+        }}
+        transition={{
+          opacity: { ...litNeonBlinkTransition, delay: 0.8 },
+          color: litNeonBlinkTransition,
+          textShadow: litNeonBlinkTransition,
+        }}
+      >
+        Naz Montés
+      </motion.p>
+    </CoverCreditWrap>
   );
 }
 
 /** Portada Hospital: solo MORVO + crédito, centrado */
 function HospitalCover({ theme }: CoverSlideProps) {
   const line = theme.line;
+  const fg = slideText(theme);
 
   return (
     <div style={slideRootStyle(theme)}>
       <Grain />
+      <ObscenaTeatralHeader color={fg} />
       <div
         style={{
           position: "absolute",
@@ -684,57 +660,25 @@ function HospitalCover({ theme }: CoverSlideProps) {
 /** Portada Raíz: bosque salvaje + crédito óxido, centrado */
 function RaizCover({ theme }: CoverSlideProps) {
   const fg = slideText(theme);
-  const mobile = useIsMobile();
   const lineGrad = `linear-gradient(90deg, transparent, ${fg} 30%, ${fg} 70%, transparent)`;
 
-  const premium = isRaizPremium(theme);
   const isHelecho = isHelechoStyle(theme);
-  const isSelva = theme.id === "raiz";
+  const isSelva = isSelvaStyle(theme.id);
+  const isPetroleo = theme.id === "raiz_petroleo";
   const isHelechoPalette = theme.id === "raiz_helecho";
+  const isNiebla = theme.id === "raiz_niebla";
   const isPino = theme.id === "raiz_pino";
   const useSelvaDropCredit = isSelva || isHelechoPalette;
-  const titleCreditGap = isPino || useSelvaDropCredit ? 0 : "clamp(20px, 3.5vh, 40px)";
+  const usesEsmeraldaTitleSize = isPetroleo;
+  const titleCreditGap =
+    isPino || isNiebla || isPetroleo || useSelvaDropCredit
+      ? 0
+      : "clamp(20px, 3.5vh, 40px)";
 
   return (
     <div style={{ ...slideRootStyle(theme), overflow: isHelecho ? "visible" : undefined }}>
       <Grain light />
-      {premium && (
-        <div
-          style={{
-            position: "absolute",
-            top: "clamp(20px, 4vh, 40px)",
-            left: 0,
-            right: 0,
-            textAlign: "center",
-            zIndex: 30,
-            ...(isHelechoPalette
-              ? {
-                  fontFamily: SELVA_CREDIT_FONT,
-                  fontStyle: "italic",
-                  fontWeight: 400,
-                  fontSize: DROP_CREDIT_FONT_SIZE,
-                  letterSpacing: mobile ? "0.03em" : "0.05em",
-                  textTransform: "uppercase",
-                  color: fg,
-                  transform: `scaleX(${mobile ? DROP_CREDIT_SCALE_X.mobile : DROP_CREDIT_SCALE_X.desktop})`,
-                  transformOrigin: "center center",
-                }
-              : {
-                  fontFamily: isHelecho
-                    ? fontDisplay(theme)
-                    : "'Cormorant Garamond', serif",
-                  fontStyle: isHelecho ? "normal" : "italic",
-                  fontWeight: isHelecho ? 500 : undefined,
-                  fontSize: "clamp(23.6px, 2.95vw, 63px)",
-                  letterSpacing: isHelecho ? "0.08em" : "0.11em",
-                  textTransform: isHelecho ? "uppercase" : undefined,
-                  color: isHelecho ? fg : "#FA8072",
-                }),
-          }}
-        >
-          Compañía OBSCENA Teatral
-        </div>
-      )}
+      <ObscenaTeatralHeader color={fg} />
       <div
         style={{
           position: "absolute",
@@ -798,15 +742,28 @@ function RaizCover({ theme }: CoverSlideProps) {
               alignItems: "center",
               width: "100%",
               fontFamily: fontDisplay(theme),
-              fontSize: isHelecho
-                ? HELECHO_TITLE_FONT_SIZE
-                : "clamp(60px, 11vw, 170px)",
+              fontSize: usesEsmeraldaTitleSize
+                ? PETROLEO_TITLE_FONT_SIZE
+                : isHelecho
+                  ? isNiebla
+                    ? NIEBLA_TITLE_FONT_SIZE
+                    : HELECHO_TITLE_FONT_SIZE
+                  : ESMERALDA_TITLE_FONT_SIZE,
               userSelect: "none",
               overflow: "visible",
-              ...(isSelva ? { position: "relative", zIndex: 2 } : {}),
-              ...(isHelecho
-                ? HELECHO_TITLE_STYLE
-                : { fontWeight: 900, lineHeight: 1 }),
+              ...(isSelva || isHelechoPalette || isPino
+                ? { position: "relative", zIndex: 2 }
+                : {}),
+              ...(usesEsmeraldaTitleSize
+                ? {
+                    fontFamily: HELECHO_TITLE_FONT,
+                    fontWeight: 900,
+                    lineHeight: 1,
+                    textTransform: "uppercase" as const,
+                  }
+                : isHelecho
+                  ? HELECHO_TITLE_STYLE
+                  : { fontWeight: 900, lineHeight: 1 }),
             }}
           >
             <CoverTitle palette={theme.id} />
@@ -815,11 +772,15 @@ function RaizCover({ theme }: CoverSlideProps) {
             <EsmeraldaSalmonCredit />
           ) : theme.id === "raiz_pino" ? (
             <PinoDropCredit color={fg} />
+          ) : isNiebla ? (
+            <NieblaDropCredit color={fg} />
           ) : useSelvaDropCredit ? (
             <SelvaDropCredit
               color={isSelva ? (theme.titleLetters ?? fg) : fg}
-              nudgeXOffsetPx={isHelechoPalette ? -2 : 0}
+              titleScaleX={isHelechoPalette ? HELECHO_TITLE_SCALE_X : SELVA_TITLE_SCALE_X}
             />
+          ) : isPetroleo ? (
+            <PetroleoCredit color={fg} />
           ) : isHelecho ? (
             <HelechoChartreuseCredit color={fg} />
           ) : (
@@ -834,10 +795,12 @@ function RaizCover({ theme }: CoverSlideProps) {
 /** Portada Podredumbre: solo MORVO + crédito (efecto V), centrado */
 function TierraCover({ theme }: CoverSlideProps) {
   const line = theme.line;
+  const fg = slideText(theme);
 
   return (
     <div style={slideRootStyle(theme)}>
       <Grain />
+      <ObscenaTeatralHeader color={fg} />
       <div
         style={{
           position: "absolute",
@@ -904,10 +867,12 @@ function TierraCover({ theme }: CoverSlideProps) {
 /** Portada Invertida: solo MORVO + crédito (efecto V), centrado */
 function InvertidaCover({ theme }: CoverSlideProps) {
   const line = theme.line;
+  const fg = slideText(theme);
 
   return (
     <div style={slideRootStyle(theme)}>
       <Grain />
+      <ObscenaTeatralHeader color={fg} />
       <div
         style={{
           position: "absolute",
@@ -979,6 +944,7 @@ function LiturgicoCover({ theme }: CoverSlideProps) {
   return (
     <div style={slideRootStyle(theme)}>
       <Grain light />
+      <ObscenaTeatralHeader color={fg} />
       <div
         style={{
           position: "absolute",
@@ -1067,6 +1033,7 @@ function StandardCover({ theme }: CoverSlideProps) {
   return (
     <div style={slideRootStyle(theme)}>
       <Grain light={Boolean(theme.bg)} />
+      <ObscenaTeatralHeader color={text} />
 
       <div
         style={{
@@ -1116,28 +1083,6 @@ function StandardCover({ theme }: CoverSlideProps) {
       >
 
         01
-
-      </div>
-
-      <div
-
-        className="absolute top-6 right-8 z-20 text-right"
-
-        style={{
-
-          fontFamily: fontBody(theme),
-
-          ...mutedTextStyle(theme, 0.5),
-
-          fontSize: "clamp(9px,0.9vw,13px)",
-
-          letterSpacing: "0.2em",
-
-        }}
-
-      >
-
-        [COMPAÑÍA PRODUCTORA]
 
       </div>
 

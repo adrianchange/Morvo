@@ -37,7 +37,7 @@ El logotipo tipográfico **MORVO** — referencia directa a la estética de *Kil
 2. Imagen promocional / flyer  
 3. Sinopsis  
 4–6. Fichas de personaje (Mario, Cristian, Víctor)  
-7. Directora (Nazareth Montés)  
+7. Directora (Naz Montés)  
 8. Teaser audiovisual y contacto  
 
 Navegación por teclado, swipe táctil e indicadores de progreso.

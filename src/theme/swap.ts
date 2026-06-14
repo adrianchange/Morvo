@@ -69,6 +69,12 @@ export const RAIZ_OXIDO = "#7D5A4A";
 
 export const RAIZ_TEXT_LIGHT = "#C4A892";
 
+/** Forest green terroso — bosque caducifolio (referencia Figma) */
+export const GREEN_FOREST_TERROSO = "#2E6F40";
+
+/** Cobre hoja otoñal — letras sobre verde bosque */
+export const COPPER_AUTUMN_LEAF = "#C67B4E";
+
 
 
 /** Alias legacy (petróleo) */

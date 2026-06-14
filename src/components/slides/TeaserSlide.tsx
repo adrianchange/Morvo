@@ -1,5 +1,5 @@
 import type { PaletteTheme } from "../../theme/palettes";
-import { isRaizPremium, slideText } from "../../theme/palettes";
+import { hasTeaserVideo, slideText } from "../../theme/palettes";
 import { fontBody, fontDisplay } from "./slideStyles";
 import { MediaFrame, SlideShell } from "./shared";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -105,7 +105,7 @@ function MobileTeaser({ theme, text }: { theme: PaletteTheme; text: string }) {
           Teaser y Contacto
         </h2>
 
-        {isRaizPremium(theme) ? (
+        {hasTeaserVideo(theme.id) ? (
           <TeaserVideo
             font={fontDisplay(theme)}
             accentColor={slideText(theme)}
@@ -123,7 +123,7 @@ function MobileTeaser({ theme, text }: { theme: PaletteTheme; text: string }) {
           <SectionLabel theme={theme} text={text} compact>
             Contacto
           </SectionLabel>
-          <ContactBlock compact theme={theme} label="DIRECCIÓN" value="Nazareth Montés" text={text} />
+          <ContactBlock compact theme={theme} label="DIRECCIÓN" value="Naz Montés" text={text} />
           <ContactBlock compact theme={theme} label="PRODUCCIÓN" value="Compañía OBSCENA Teatral" text={text} />
           <ContactBlock compact theme={theme} label="CONTACTO" value="[email@compañia.com]" text={text} />
           <ContactBlock compact theme={theme} label="WEB" value="[www.compañia.com]" text={text} />
@@ -188,7 +188,7 @@ function DesktopTeaser({ theme, text }: { theme: PaletteTheme; text: string }) {
           overflow: "hidden",
         }}
       >
-        {isRaizPremium(theme) ? (
+        {hasTeaserVideo(theme.id) ? (
           <TeaserVideo
             font={fontDisplay(theme)}
             accentColor={slideText(theme)}
@@ -214,7 +214,7 @@ function DesktopTeaser({ theme, text }: { theme: PaletteTheme; text: string }) {
             <SectionLabel theme={theme} text={text}>
               Contacto
             </SectionLabel>
-            <ContactBlock theme={theme} label="DIRECCIÓN" value="Nazareth Montés" text={text} />
+            <ContactBlock theme={theme} label="DIRECCIÓN" value="Naz Montés" text={text} />
             <ContactBlock theme={theme} label="PRODUCCIÓN" value="Compañía OBSCENA Teatral" text={text} />
             <ContactBlock theme={theme} label="CONTACTO" value="[email@compañia.com]" text={text} />
             <ContactBlock theme={theme} label="WEB" value="[www.compañia.com]" text={text} />

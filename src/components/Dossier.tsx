@@ -109,7 +109,7 @@ export function Dossier({ paletteId, onBack }: Props) {
       theme={theme}
       data={{
         index: "07",
-        characterName: "Nazareth Montés",
+        characterName: "Naz Montés",
         actorName: "",
         roleLabel: "Escritora y Directora",
         photoLabel: "[Foto de la directora]",
@@ -180,24 +180,24 @@ export function Dossier({ paletteId, onBack }: Props) {
       <button
         type="button"
         onClick={onBack}
+        aria-label="Volver al selector de paletas"
         style={{
           position: "absolute",
-          top: mobile ? 8 : 12,
-          right: mobile ? 8 : 12,
+          top: mobile ? 10 : 14,
+          left: mobile ? 10 : 14,
           zIndex: 50,
           fontFamily: fontBody(theme),
-          fontSize: mobile ? 10 : 12,
-          letterSpacing: "0.15em",
+          fontSize: mobile ? 22 : 26,
+          lineHeight: 1,
           color: text,
           opacity: theme.bg ? 0.65 : 0.4,
           background: "transparent",
           border: "none",
-          textDecoration: "underline",
           cursor: "pointer",
-          padding: mobile ? "6px 8px" : undefined,
+          padding: mobile ? "6px 10px" : "8px 12px",
         }}
       >
-        {mobile ? "← paletas" : `cambiar paleta · ${theme.label}`}
+        ←
       </button>
     </div>
   );

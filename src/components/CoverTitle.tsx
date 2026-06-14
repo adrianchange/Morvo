@@ -7,10 +7,11 @@ import {
   HELECHO_V_UPEM,
 } from "./helechoVGlyph";
 import { motion } from "motion/react";
-import { PALETTES, type PaletteId, type PaletteTheme } from "../theme/palettes";
-import { type ReactNode } from "react";
+import { isSelvaStyle, PALETTES, type PaletteId, type PaletteTheme } from "../theme/palettes";
+import { type CSSProperties, type ReactNode } from "react";
 import { useIsMobile } from "../hooks/useIsMobile";
-import { fontDisplay, paletteFonts, HELECHO_FONTS, HELECHO_TITLE_FONT_SIZE, HELECHO_TITLE_STYLE, HELECHO_TITLE_SCALE_X, NIEBLA_TITLE_SCALE_X, SELVA_CREDIT_FONT, SELVA_TITLE_SCALE_X } from "../theme/typography";
+import { useCoverCreditTypography } from "../hooks/useCoverCreditTypography";
+import { ESMERALDA_TITLE_LETTER_GAP, fontDisplay, HELECHO_TITLE_FONT_SIZE, HELECHO_TITLE_STYLE, HELECHO_TITLE_SCALE_X, NIEBLA_TITLE_LETTER_GAP, NIEBLA_TITLE_SCALE_X, PETROLEO_TITLE_SCALE_X, PINO_TITLE_SCALE_X, SELVA_TITLE_SCALE_X } from "../theme/typography";
 import {
   GREEN_PINO,
   GREEN_PINO_LIGHT,
@@ -100,61 +101,44 @@ export function RaizCredit({
   greenDark: string;
   greenLight: string;
 }) {
+  const { textStyle } = useCoverCreditTypography(greenLight, { textAlign: "center" });
   return (
-    <motion.p
-      style={{
-        margin: 0,
-        fontFamily: "'Cormorant Garamond', serif",
-        fontStyle: "italic",
-        fontSize: "clamp(18px, 2.25vw, 48px)",
-        letterSpacing: "0.22em",
-        textTransform: "lowercase",
-        color: greenLight,
-        textAlign: "center",
-        alignSelf: "center",
-      }}
-      initial={{ opacity: 0.88 }}
-      animate={{
-        opacity: [1, 0.9, 1, 0.88, 1, 0.92, 1, 0.9, 1, 0.91, 1],
-        color: [greenLight, greenDark, greenLight, greenDark, greenLight, greenDark, greenLight],
-        textShadow: [
-          `0 0 12px ${RAIZ_GLOW_SOFT}, 0 0 5px ${RAIZ_GLOW_DIM}`,
-          `0 0 4px ${RAIZ_GLOW_DIM}`,
-          `0 0 14px ${RAIZ_GLOW_SOFT}, 0 0 6px ${RAIZ_GLOW_DIM}`,
-          `0 0 5px ${RAIZ_GLOW_DIM}`,
-          `0 0 12px ${RAIZ_GLOW_SOFT}, 0 0 5px ${RAIZ_GLOW_DIM}`,
-          `0 0 4px ${RAIZ_GLOW_DIM}`,
-          `0 0 13px ${RAIZ_GLOW_SOFT}, 0 0 5px ${RAIZ_GLOW_DIM}`,
-        ],
-      }}
-      transition={{
-        opacity: { ...vBlinkTransition, delay: 0.5 },
-        color: raizVTransition,
-        textShadow: raizVTransition,
-      }}
-    >
-      por Nazaret Montes
-    </motion.p>
+    <CoverCreditWrap>
+      <motion.p
+        style={textStyle}
+        initial={{ opacity: 0.88 }}
+        animate={{
+          opacity: [1, 0.9, 1, 0.88, 1, 0.92, 1, 0.9, 1, 0.91, 1],
+          color: [greenLight, greenDark, greenLight, greenDark, greenLight, greenDark, greenLight],
+          textShadow: [
+            `0 0 12px ${RAIZ_GLOW_SOFT}, 0 0 5px ${RAIZ_GLOW_DIM}`,
+            `0 0 4px ${RAIZ_GLOW_DIM}`,
+            `0 0 14px ${RAIZ_GLOW_SOFT}, 0 0 6px ${RAIZ_GLOW_DIM}`,
+            `0 0 5px ${RAIZ_GLOW_DIM}`,
+            `0 0 12px ${RAIZ_GLOW_SOFT}, 0 0 5px ${RAIZ_GLOW_DIM}`,
+            `0 0 4px ${RAIZ_GLOW_DIM}`,
+            `0 0 13px ${RAIZ_GLOW_SOFT}, 0 0 5px ${RAIZ_GLOW_DIM}`,
+          ],
+        }}
+        transition={{
+          opacity: { ...vBlinkTransition, delay: 0.5 },
+          color: raizVTransition,
+          textShadow: raizVTransition,
+        }}
+      >
+        Naz Montés
+      </motion.p>
+    </CoverCreditWrap>
   );
 }
 
 const SALMON = "#FA8072";
 export function EsmeraldaSalmonCredit() {
+  const { textStyle } = useCoverCreditTypography(SALMON, { textAlign: "center" });
   return (
-    <p
-      style={{
-        margin: 0,
-        fontFamily: "'Cormorant Garamond', serif",
-        fontStyle: "italic",
-        fontSize: "clamp(23.6px, 2.95vw, 63px)",
-        letterSpacing: "0.11em",
-        color: SALMON,
-        alignSelf: "flex-end",
-        paddingRight: "clamp(20px, 5vw, 80px)",
-      }}
-    >
-      Nazareth Montés
-    </p>
+    <CoverCreditWrap>
+      <p style={textStyle}>Naz Montés</p>
+    </CoverCreditWrap>
   );
 }
 
@@ -373,7 +357,14 @@ const NIEBLA_DRIP_FULL = HELECHO_V_INNER_JOINT.y - NIEBLA_DRIP_END_Y;
 const nieblaDripEndAt = (dripProgress: number) =>
   HELECHO_V_INNER_JOINT.y - (dripProgress / DRIP_LEN) * NIEBLA_DRIP_FULL;
 
-/** 0-2 lágrima sola en junta · 3+ caída con trazo creciendo detrás */
+/** Niebla — 0-3 junta · 4-5 baja · 6-7 abajo (3 s) · 8 reset */
+const NIEBLA_HOLD_S = 3;
+const NIEBLA_RESET_S = 0.35;
+const NIEBLA_FALL_S = 5.5;
+const NIEBLA_DRIP_DURATION = NIEBLA_FALL_S + NIEBLA_HOLD_S + NIEBLA_RESET_S;
+const NIEBLA_T_ARRIVE = NIEBLA_FALL_S / NIEBLA_DRIP_DURATION;
+const NIEBLA_T_HOLD_END = (NIEBLA_FALL_S + NIEBLA_HOLD_S) / NIEBLA_DRIP_DURATION;
+
 const NIEBLA_DRIP_KEY_END_Y = [
   HELECHO_V_INNER_JOINT.y,
   HELECHO_V_INNER_JOINT.y,
@@ -382,12 +373,13 @@ const NIEBLA_DRIP_KEY_END_Y = [
   HELECHO_V_INNER_JOINT.y - 95,
   nieblaDripEndAt(85),
   NIEBLA_DRIP_END_Y,
+  NIEBLA_DRIP_END_Y,
   HELECHO_V_INNER_JOINT.y,
 ] as const;
 
-const NIEBLA_TEAR_SCALES = [0, 0.82, 0.88, 0.88, 0.92, 0.96, 1, 0] as const;
-const NIEBLA_TEAR_OPACITY = [0, 1, 1, 1, 1, 1, 1, 0] as const;
-const NIEBLA_LINE_OPACITY = [0, 0, 0, 0.55, 1, 1, 1, 0] as const;
+const NIEBLA_TEAR_SCALES = [0, 0.82, 0.88, 0.88, 0.92, 0.96, 1, 1, 0] as const;
+const NIEBLA_TEAR_OPACITY = [0, 1, 1, 1, 1, 1, 1, 1, 0] as const;
+const NIEBLA_LINE_OPACITY = [0, 0, 0, 0.55, 1, 1, 1, 1, 0] as const;
 const NIEBLA_DRIP_LINE_W = 7;
 const NIEBLA_TEAR_STROKE = "#4A0A10";
 
@@ -424,11 +416,23 @@ const NIEBLA_DRIP_PATHS = NIEBLA_DRIP_KEY_END_Y.map((endY, i) =>
 const NIEBLA_TEAR_X = NIEBLA_DRIP_KEY_END_Y.map((endY) => nieblaDripLead(endY).x);
 const NIEBLA_TEAR_Y = [...NIEBLA_DRIP_KEY_END_Y];
 
+const nieblaDripTimes = [
+  0,
+  0.06,
+  0.12,
+  0.18,
+  0.28,
+  0.42,
+  NIEBLA_T_ARRIVE,
+  NIEBLA_T_HOLD_END,
+  1,
+] as const;
+
 const nieblaDripTransition = {
-  duration: 6.5,
+  duration: NIEBLA_DRIP_DURATION,
   repeat: Infinity,
   ease: "easeInOut" as const,
-  times: [0, 0.07, 0.14, 0.22, 0.34, 0.52, 0.8, 1],
+  times: [...nieblaDripTimes],
   repeatDelay: 0.5,
 };
 
@@ -446,7 +450,9 @@ const PINO_MID_Y_EXTENDED = pinoDripEndAt(PINO_DRIP_LEN / 2);
 /** Cuánto sobresale la gota bajo el cajón del glifo V (→ marginTop del crédito) */
 const PINO_DROP_BELOW_V_EM =
   (1432 - PINO_BOTTOM_Y - 12 - HELECHO_V_INK_H) / HELECHO_V_UPEM;
-const PINO_CREDIT_MARGIN_TOP = `calc(10px + ${PINO_DROP_BELOW_V_EM} * ${HELECHO_TITLE_FONT_SIZE} + clamp(6px, 0.8vh, 14px))`;
+const PINO_CREDIT_MARGIN_TOP = `calc(10px + ${PINO_DROP_BELOW_V_EM} * ${HELECHO_TITLE_FONT_SIZE} + clamp(2px, 0.35vh, 8px) - 0.2em)`;
+/** Alinear la «e» bajo la gota al impactar (coords SVG del vértice de caída) */
+const PINO_DROP_LAND = nieblaDripLead(PINO_BOTTOM_Y);
 const PINO_JOINT = HELECHO_V_INNER_JOINT;
 
 /** Gota — (0,0) punta delantera; cuerpo +y hacia la junta (cola = fin del hilo) */
@@ -604,11 +610,56 @@ const SELVA_DROP_BELOW_V_EM =
 const SELVA_CREDIT_MARGIN_TOP = `calc(10px + ${SELVA_DROP_BELOW_V_EM} * ${HELECHO_TITLE_FONT_SIZE} + clamp(2px, 0.35vh, 8px) - 0.2em)`;
 /** Alinear la «e» bajo la gota al impactar (coords SVG del vértice de caída) */
 const SELVA_DROP_LAND = nieblaDripLead(SELVA_DROP_LAND_Y);
-const SELVA_CREDIT_NUDGE_X_BASE = `${((SELVA_DROP_LAND.x - HELECHO_V_ADVANCE * 0.5) / HELECHO_V_UPEM) * 4.8 - 1.05}em`;
-/** Compresión horizontal del crédito (Selva / Helecho) */
-export const DROP_CREDIT_SCALE_X = { mobile: 0.78, desktop: 0.86 } as const;
-export const DROP_CREDIT_FONT_SIZE = "clamp(15px, 2vw, 42px)";
-const SELVA_CREDIT_SCALE_X = DROP_CREDIT_SCALE_X;
+
+/** Calibrado en Selva (scaleX 1.34) — escala con el estiramiento del título MORVO */
+const DROP_CREDIT_NUDGE_EM_FACTOR = 4.8;
+const DROP_CREDIT_E_OFFSET_EM = -1.05;
+
+function dropCreditNudgeXEm(dropLandX: number, titleScaleX: number) {
+  const factor = DROP_CREDIT_NUDGE_EM_FACTOR * (titleScaleX / SELVA_TITLE_SCALE_X);
+  return (
+    ((dropLandX - HELECHO_V_ADVANCE * 0.5) / HELECHO_V_UPEM) * factor + DROP_CREDIT_E_OFFSET_EM
+  );
+}
+
+function dropCreditNudgePx(mobile: boolean, titleScaleX: number) {
+  const base = mobile ? 20 : 22;
+  return base * (titleScaleX / SELVA_TITLE_SCALE_X);
+}
+
+/** Envuelve crédito con compresión horizontal Selva */
+export function CoverCreditWrap({
+  wrapStyle,
+  children,
+}: {
+  wrapStyle?: CSSProperties;
+  children: ReactNode;
+}) {
+  const { wrapStyle: baseWrap } = useCoverCreditTypography();
+  return <div style={{ ...baseWrap, ...wrapStyle }}>{children}</div>;
+}
+
+/** Encabezado superior — misma tipografía que el subtítulo «Naz Montés» */
+export function ObscenaTeatralHeader({ color }: { color: string }) {
+  const { textStyle, wrapStyle } = useCoverCreditTypography(color, { textAlign: "center" });
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: "clamp(20px, 4vh, 40px)",
+        left: 0,
+        right: 0,
+        zIndex: 30,
+        display: "flex",
+        justifyContent: "center",
+        ...wrapStyle,
+        alignSelf: "unset",
+      }}
+    >
+      <p style={textStyle}>Compañía OBSCENA Teatral</p>
+    </div>
+  );
+}
 
 /** Path SVG trazado desde cloud_13869263.png — punta (0,0) · bulbo +y */
 const SELVA_DROP_LOCAL = (() => {
@@ -858,6 +909,69 @@ const helechoDripTransition = {
   repeatDelay: 0.25,
 };
 
+/** Petróleo — mismo chorreo helecho + 3 s congelado abajo (mismos keyframes de caída) */
+const PETROLEO_HOLD_S = 3;
+const PETROLEO_FALL_S = helechoDripTransition.duration;
+const PETROLEO_RESET_S = (1 - 0.78) * PETROLEO_FALL_S;
+const PETROLEO_DRIP_DURATION = PETROLEO_FALL_S + PETROLEO_HOLD_S + PETROLEO_RESET_S;
+const PETROLEO_T_ARRIVE = PETROLEO_FALL_S / PETROLEO_DRIP_DURATION;
+const PETROLEO_T_HOLD_END = (PETROLEO_FALL_S + PETROLEO_HOLD_S) / PETROLEO_DRIP_DURATION;
+
+const scalePetroleoFallTime = (t: number) => (t / 0.78) * PETROLEO_T_ARRIVE;
+
+const petroleoDripTimes = [
+  0,
+  scalePetroleoFallTime(0.12),
+  scalePetroleoFallTime(0.28),
+  scalePetroleoFallTime(0.42),
+  PETROLEO_T_ARRIVE,
+  PETROLEO_T_HOLD_END,
+  1,
+] as const;
+
+/** Extensión de DRIP_* — caída idéntica · pausa abajo · reset */
+const PETROLEO_DRIP_PATHS = [
+  DRIP_PATHS[0],
+  DRIP_PATHS[1],
+  DRIP_PATHS[2],
+  DRIP_PATHS[3],
+  DRIP_PATHS[4],
+  DRIP_PATHS[4],
+  DRIP_PATHS[5],
+] as const;
+
+const PETROLEO_DRIP_DROP_CY = [
+  DRIP_DROP_CY[0],
+  DRIP_DROP_CY[1],
+  DRIP_DROP_CY[2],
+  DRIP_DROP_CY[3],
+  DRIP_DROP_CY[4],
+  DRIP_DROP_CY[4],
+  DRIP_DROP_CY[5],
+] as const;
+
+const PETROLEO_DRIP_DROP_R_ANIM = [
+  DRIP_DROP_R_ANIM[0],
+  DRIP_DROP_R_ANIM[1],
+  DRIP_DROP_R_ANIM[2],
+  DRIP_DROP_R_ANIM[3],
+  DRIP_DROP_R_ANIM[4],
+  DRIP_DROP_R_ANIM[4],
+  DRIP_DROP_R_ANIM[5],
+] as const;
+
+const PETROLEO_DRIP_LINE_OPACITY = [0, 1, 1, 1, 1, 1, 0] as const;
+const PETROLEO_DRIP_DROP_OPACITY = [0, 1, 1, 1, 1, 1, 0] as const;
+const PETROLEO_CREDIT_OPACITY = [0, 0, 0, 0, 1, 1, 0] as const;
+
+const petroleoDripTransition = {
+  duration: PETROLEO_DRIP_DURATION,
+  repeat: Infinity,
+  ease: helechoDripTransition.ease,
+  times: [...petroleoDripTimes],
+  repeatDelay: helechoDripTransition.repeatDelay,
+};
+
 function HelechoTitleRow({
   letterColor,
   whiteBlink = false,
@@ -869,20 +983,22 @@ function HelechoTitleRow({
   jointTearStroke,
   selvaCamoInk,
   selvaDropInk,
+  letterGap,
 }: {
   letterColor: string;
   whiteBlink?: boolean;
   vColor?: string;
   halo?: "cyan" | "black";
-  dripVariant?: "helecho" | "niebla" | "pino" | "selva";
+  dripVariant?: "helecho" | "niebla" | "pino" | "petroleo" | "selva";
   scaleX?: number;
   jointTearColor?: string;
   jointTearStroke?: string;
   selvaCamoInk?: string;
   selvaDropInk?: string;
+  letterGap?: string;
 }) {
   const letters = ["M", "O", "R", "V", "O"] as const;
-  const titleLetterGap = HELECHO_TITLE_STYLE.letterSpacing;
+  const titleLetterGap = letterGap ?? HELECHO_TITLE_STYLE.letterSpacing;
   return (
     <span
       style={{
@@ -942,7 +1058,7 @@ export function HelechoNeonV({
   color?: string;
   whiteBlink?: boolean;
   halo?: "cyan" | "black";
-  dripVariant?: "helecho" | "niebla" | "pino" | "selva";
+  dripVariant?: "helecho" | "niebla" | "pino" | "petroleo" | "selva";
   jointTearColor?: string;
   jointTearStroke?: string;
   selvaCamoInk?: string;
@@ -953,20 +1069,29 @@ export function HelechoNeonV({
   const blinkFill = petroleoVBlinkFill(color);
   const isJointTearDrip =
     dripVariant === "niebla" || dripVariant === "pino" || dripVariant === "selva";
+  const isPetroleoDrip = dripVariant === "petroleo";
   const isPinoDrip = dripVariant === "pino";
   const isSelvaDrip = dripVariant === "selva";
   const isLineDrip = isPinoDrip || isSelvaDrip;
   const camoInk = selvaCamoInk ?? SELVA_CAMOUFLAGE;
   const dropInk = selvaDropInk ?? SELVA_DROP_INK;
   const selvaDripFill = selvaDripFillKeyframes(color, camoInk, dropInk);
-  const dripPaths = isLineDrip ? [] : isJointTearDrip ? NIEBLA_DRIP_PATHS : DRIP_PATHS;
+  const dripPaths = isLineDrip
+    ? []
+    : isPetroleoDrip
+      ? PETROLEO_DRIP_PATHS
+      : isJointTearDrip
+        ? NIEBLA_DRIP_PATHS
+        : DRIP_PATHS;
   const dripTransition = isPinoDrip
     ? pinoDripEaseTransition
     : isSelvaDrip
       ? selvaDripEaseTransition
-      : isJointTearDrip
-        ? nieblaDripTransition
-        : helechoDripTransition;
+      : isPetroleoDrip
+        ? petroleoDripTransition
+        : isJointTearDrip
+          ? nieblaDripTransition
+          : helechoDripTransition;
   const lineOpacityTransition = isPinoDrip
     ? pinoDripTransition
     : isSelvaDrip
@@ -993,10 +1118,15 @@ export function HelechoNeonV({
 
   const dripLineAnimate = isJointTearDrip
     ? { opacity: [...jointLineOpacity] }
-    : {
-        opacity: [0, 1, 1, 1, 1, 0],
-        ...(whiteBlink ? { stroke: [...blinkFill] } : {}),
-      };
+    : isPetroleoDrip
+      ? {
+          opacity: [...PETROLEO_DRIP_LINE_OPACITY],
+          ...(whiteBlink ? { stroke: [...blinkFill] } : {}),
+        }
+      : {
+          opacity: [0, 1, 1, 1, 1, 0],
+          ...(whiteBlink ? { stroke: [...blinkFill] } : {}),
+        };
 
   const dripLineTransition = isJointTearDrip
     ? {
@@ -1123,13 +1253,13 @@ export function HelechoNeonV({
   ) : (
     <motion.circle
       cx={FONT_TIP_X}
-      cy={DRIP_DROP_CY[0]}
-      r={DRIP_DROP_R_ANIM[0]}
+      cy={(isPetroleoDrip ? PETROLEO_DRIP_DROP_CY : DRIP_DROP_CY)[0]}
+      r={(isPetroleoDrip ? PETROLEO_DRIP_DROP_R_ANIM : DRIP_DROP_R_ANIM)[0]}
       fill={whiteBlink ? undefined : dripColor}
       animate={{
-        cy: [...DRIP_DROP_CY],
-        r: [...DRIP_DROP_R_ANIM],
-        opacity: [0, 1, 1, 1, 1, 0],
+        cy: [...(isPetroleoDrip ? PETROLEO_DRIP_DROP_CY : DRIP_DROP_CY)],
+        r: [...(isPetroleoDrip ? PETROLEO_DRIP_DROP_R_ANIM : DRIP_DROP_R_ANIM)],
+        opacity: [...(isPetroleoDrip ? PETROLEO_DRIP_DROP_OPACITY : [0, 1, 1, 1, 1, 0])],
         ...(whiteBlink ? { fill: [...blinkFill] } : {}),
       }}
       transition={{
@@ -1183,78 +1313,102 @@ export function HelechoNeonV({
 }
 
 export function HelechoChartreuseCredit({ color = HELECHO_CYAN }: { color?: string }) {
+  const { textStyle } = useCoverCreditTypography(color, { textAlign: "center" });
   return (
-    <p
-      style={{
-        margin: 0,
-        fontFamily: HELECHO_FONTS.body,
-        fontWeight: 500,
-        fontSize: "clamp(23.6px, 2.95vw, 63px)",
-        letterSpacing: "0.06em",
-        textTransform: "uppercase",
-        color,
-        alignSelf: "flex-end",
-        paddingRight: "clamp(20px, 5vw, 80px)",
-      }}
-    >
-      Nazareth Montés
-    </p>
+    <CoverCreditWrap>
+      <p style={textStyle}>Naz Montés</p>
+    </CoverCreditWrap>
   );
 }
 
-/** Crédito sincronizado con la gota (estilo Selva; color vía prop) */
+/** Desplazamiento del subtítulo Petróleo (px pantalla, vía translate) */
+const PETROLEO_CREDIT_NUDGE_X_PX = 14;
+const PETROLEO_CREDIT_NUDGE_Y_PX = 0;
+
+/** Raíz Petróleo — subtítulo al terminar el chorreo, 3 s visible, oculto al reiniciar */
+export function PetroleoCredit({ color = HELECHO_CYAN }: { color?: string }) {
+  const { textStyle, wrapStyle } = useCoverCreditTypography(color, { textAlign: "center" });
+  return (
+    <CoverCreditWrap
+      wrapStyle={{
+        ...wrapStyle,
+        position: "relative",
+        transform: `translate(${PETROLEO_CREDIT_NUDGE_X_PX}px, ${PETROLEO_CREDIT_NUDGE_Y_PX}px) ${wrapStyle.transform ?? ""}`,
+      }}
+    >
+      <motion.p
+        style={textStyle}
+        animate={{ opacity: [...PETROLEO_CREDIT_OPACITY] }}
+        transition={petroleoDripTransition}
+      >
+        Naz Montes
+      </motion.p>
+    </CoverCreditWrap>
+  );
+}
+
+/** Desplazamiento del subtítulo Niebla (px pantalla) */
+const NIEBLA_CREDIT_NUDGE_X_PX = 27;
+const NIEBLA_CREDIT_NUDGE_Y_PX = -2;
+
+/** Raíz Niebla — subtítulo al terminar el chorreo, 3 s visible, oculto al reiniciar */
+export function NieblaDropCredit({ color }: { color?: string }) {
+  const { textStyle, wrapStyle } = useCoverCreditTypography(color, { textAlign: "center" });
+  return (
+    <CoverCreditWrap
+      wrapStyle={{
+        ...wrapStyle,
+        position: "relative",
+        left: NIEBLA_CREDIT_NUDGE_X_PX,
+        top: NIEBLA_CREDIT_NUDGE_Y_PX,
+      }}
+    >
+      <motion.p
+        style={textStyle}
+        animate={{ opacity: [0, 0, 1, 1, 0] }}
+        transition={{
+          duration: NIEBLA_DRIP_DURATION,
+          repeat: Infinity,
+          repeatDelay: 0.5,
+          ease: "linear",
+          times: [0, NIEBLA_T_ARRIVE - 0.0001, NIEBLA_T_ARRIVE, NIEBLA_T_HOLD_END, 1],
+        }}
+      >
+        Naz Montes
+      </motion.p>
+    </CoverCreditWrap>
+  );
+}
+
+/** Crédito sincronizado con la gota (tipografía Selva; color vía prop) */
 export function SelvaDropCredit({
   color = RAIZ_OXIDO,
-  fontFamily = SELVA_CREDIT_FONT,
-  fontStyle = "italic",
-  fontWeight = 400,
-  letterSpacing,
-  nudgeXOffsetPx = 0,
+  titleScaleX = SELVA_TITLE_SCALE_X,
 }: {
   color?: string;
-  fontFamily?: string;
-  fontStyle?: "normal" | "italic";
-  fontWeight?: number;
-  letterSpacing?: string;
-  nudgeXOffsetPx?: number;
+  titleScaleX?: number;
 }) {
   const mobile = useIsMobile();
-  const creditNudgeXPx = (mobile ? 20 : 22) + nudgeXOffsetPx;
+  const { textStyle, wrapStyle } = useCoverCreditTypography(color, { textAlign: "center" });
+  const creditNudgeXEm = dropCreditNudgeXEm(SELVA_DROP_LAND.x, titleScaleX);
+  const creditNudgeXPx = dropCreditNudgePx(mobile, titleScaleX);
   const creditNudgeX = mobile
-    ? `calc(${SELVA_CREDIT_NUDGE_X_BASE} + ${creditNudgeXPx}px - 0.36em)`
-    : `calc(${SELVA_CREDIT_NUDGE_X_BASE} + ${creditNudgeXPx}px)`;
+    ? `calc(${creditNudgeXEm}em + ${creditNudgeXPx}px - 0.36em)`
+    : `calc(${creditNudgeXEm}em + ${creditNudgeXPx}px)`;
   const creditNudgeY = mobile ? "calc(-1.12em - 1px)" : "calc(-1.12em - 5px)";
-
-  const creditScaleX = mobile ? SELVA_CREDIT_SCALE_X.mobile : SELVA_CREDIT_SCALE_X.desktop;
-  const creditLetterSpacing =
-    letterSpacing ?? (mobile ? "0.03em" : "0.05em");
-
-  const creditStyle = {
-    margin: 0,
-    fontFamily,
-    fontStyle,
-    fontWeight,
-    fontSize: DROP_CREDIT_FONT_SIZE,
-    letterSpacing: creditLetterSpacing,
-    textTransform: "uppercase" as const,
-    color,
-    textAlign: "center" as const,
-    whiteSpace: "nowrap" as const,
-  };
 
   return (
     <div
       style={{
-        alignSelf: "center",
+        ...wrapStyle,
         marginTop: SELVA_CREDIT_MARGIN_TOP,
-        transform: `translate(${creditNudgeX}, ${creditNudgeY}) scaleX(${creditScaleX})`,
-        transformOrigin: "center center",
+        transform: `translate(${creditNudgeX}, ${creditNudgeY}) ${wrapStyle.transform ?? ""}`,
         position: "relative",
         zIndex: 1,
       }}
     >
       <motion.p
-        style={creditStyle}
+        style={textStyle}
         animate={{ opacity: [0, 0, 1, 1, 0] }}
         transition={{
           duration: SELVA_DRIP_DURATION,
@@ -1266,7 +1420,7 @@ export function SelvaDropCredit({
       >
         Naz Mont
         <span
-          aria-label="é"
+          aria-label="e"
           style={{
             position: "relative",
             display: "inline-block",
@@ -1281,27 +1435,35 @@ export function SelvaDropCredit({
   );
 }
 
-/** Raíz Pino — justo debajo del punto donde acaba la gota */
+/** Ajuste fino portada Pino — subtítulo bajo la gota */
+const PINO_CREDIT_FINE_X_PX = -2;
+const PINO_CREDIT_FINE_Y_PX = -16;
+
+/** Raíz Pino (Helecho · negro · lágrima cian) — gota sobre la «e» */
 export function PinoDropCredit({ color = HELECHO_CYAN }: { color?: string }) {
+  const mobile = useIsMobile();
+  const { textStyle, wrapStyle } = useCoverCreditTypography(color, { textAlign: "center" });
+  const creditNudgeXEm = dropCreditNudgeXEm(PINO_DROP_LAND.x, PINO_TITLE_SCALE_X);
+  const creditNudgeXPx = dropCreditNudgePx(mobile, PINO_TITLE_SCALE_X) + PINO_CREDIT_FINE_X_PX;
+  const creditNudgeX = mobile
+    ? `calc(${creditNudgeXEm}em + ${creditNudgeXPx}px - 0.36em)`
+    : `calc(${creditNudgeXEm}em + ${creditNudgeXPx}px)`;
+  const creditNudgeY = mobile
+    ? `calc(-1.12em - 1px + ${PINO_CREDIT_FINE_Y_PX}px)`
+    : `calc(-1.12em - 5px + ${PINO_CREDIT_FINE_Y_PX}px)`;
+
   return (
     <div
       style={{
-        alignSelf: "center",
+        ...wrapStyle,
         marginTop: PINO_CREDIT_MARGIN_TOP,
-        transform: "translate(90px, -30px)",
+        transform: `translate(${creditNudgeX}, ${creditNudgeY}) ${wrapStyle.transform ?? ""}`,
+        position: "relative",
+        zIndex: 1,
       }}
     >
       <motion.p
-        style={{
-          margin: 0,
-          fontFamily: HELECHO_FONTS.body,
-          fontWeight: 500,
-          fontSize: "clamp(23.6px, 2.95vw, 63px)",
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-          color,
-          textAlign: "center",
-        }}
+        style={textStyle}
         animate={{ opacity: [0, 0, 1, 1, 0] }}
         transition={{
           duration: PINO_DRIP_DURATION,
@@ -1311,96 +1473,92 @@ export function PinoDropCredit({ color = HELECHO_CYAN }: { color?: string }) {
           times: [0, PINO_T_ARRIVE - 0.0001, PINO_T_ARRIVE, PINO_T_HOLD_END, 1],
         }}
       >
-        Naz Montés
+        Naz Mont
+        <span
+          aria-label="e"
+          style={{
+            position: "relative",
+            display: "inline-block",
+            paddingTop: "0.32em",
+          }}
+        >
+          e
+        </span>
+        s
       </motion.p>
     </div>
   );
 }
 
 export function EsmeraldaNeonCredit() {
+  const { textStyle } = useCoverCreditTypography(GREEN_ESMERALDA);
   return (
-    <motion.p
-      style={{
-        margin: 0,
-        fontFamily: "'Cormorant Garamond', serif",
-        fontStyle: "italic",
-        fontSize: "clamp(18px, 2.25vw, 48px)",
-        letterSpacing: "0.22em",
-        textTransform: "lowercase",
-        color: GREEN_ESMERALDA,
-      }}
-      initial={{ opacity: 0 }}
-      animate={esmeraldaVAnimate()}
-      transition={{
-        opacity: { ...esmeraldaNeonTransition, delay: 0.6 },
-        color: esmeraldaNeonTransition,
-        textShadow: esmeraldaNeonTransition,
-      }}
-    >
-      por Nazaret Montes
-    </motion.p>
+    <CoverCreditWrap>
+      <motion.p
+        style={textStyle}
+        initial={{ opacity: 0 }}
+        animate={esmeraldaVAnimate()}
+        transition={{
+          opacity: { ...esmeraldaNeonTransition, delay: 0.6 },
+          color: esmeraldaNeonTransition,
+          textShadow: esmeraldaNeonTransition,
+        }}
+      >
+        Naz Montés
+      </motion.p>
+    </CoverCreditWrap>
   );
 }
 
 /** Crédito portada Podredumbre: mismo alternado rojo ↔ lavanda que la V */
 export function TierraCredit() {
+  const { textStyle } = useCoverCreditTypography(POD_RED);
   return (
-    <motion.p
-      style={{
-        margin: 0,
-        fontFamily: "'Cormorant Garamond', serif",
-        fontStyle: "italic",
-        fontSize: "clamp(18px, 2.25vw, 48px)",
-        letterSpacing: "0.22em",
-        textTransform: "lowercase",
-        color: POD_RED,
-      }}
-      initial={{ opacity: 0 }}
-      animate={{
-        color: [POD_LIT, POD_LIT, POD_RED, POD_RED, POD_LIT, POD_RED, POD_LIT],
-        opacity: [1, 0.15, 1, 0.7, 1, 0.05, 1, 0.85, 1],
-        textShadow: [
-          `0 0 40px ${TIERRA_GLOW_LIGHT}`,
-          `0 0 4px ${TIERRA_GLOW_DARK}`,
-          `0 0 55px ${TIERRA_GLOW_LIGHT}`,
-          `0 0 8px ${TIERRA_GLOW_DARK}`,
-          `0 0 45px ${TIERRA_GLOW_LIGHT}`,
-        ],
-      }}
-      transition={{
-        color: vColorTransition,
-        opacity: { ...vBlinkTransition, delay: 0.8 },
-        textShadow: vBlinkTransition,
-      }}
-    >
-      por Nazaret Montes
-    </motion.p>
+    <CoverCreditWrap>
+      <motion.p
+        style={textStyle}
+        initial={{ opacity: 0 }}
+        animate={{
+          color: [POD_LIT, POD_LIT, POD_RED, POD_RED, POD_LIT, POD_RED, POD_LIT],
+          opacity: [1, 0.15, 1, 0.7, 1, 0.05, 1, 0.85, 1],
+          textShadow: [
+            `0 0 40px ${TIERRA_GLOW_LIGHT}`,
+            `0 0 4px ${TIERRA_GLOW_DARK}`,
+            `0 0 55px ${TIERRA_GLOW_LIGHT}`,
+            `0 0 8px ${TIERRA_GLOW_DARK}`,
+            `0 0 45px ${TIERRA_GLOW_LIGHT}`,
+          ],
+        }}
+        transition={{
+          color: vColorTransition,
+          opacity: { ...vBlinkTransition, delay: 0.8 },
+          textShadow: vBlinkTransition,
+        }}
+      >
+        Naz Montés
+      </motion.p>
+    </CoverCreditWrap>
   );
 }
 
 /** Crédito portada Invertida: mismo color y parpadeo que la V */
 export function InvertidaCredit({ theme }: { theme: PaletteTheme }) {
   const vColor = theme.titleV ?? BG;
+  const { textStyle } = useCoverCreditTypography(vColor);
   return (
-    <motion.p
-      style={{
-        margin: 0,
-        fontFamily: paletteFonts(theme).body,
-        fontStyle: "italic",
-        fontSize: "clamp(18px, 2.25vw, 48px)",
-        letterSpacing: "0.22em",
-        textTransform: "lowercase",
-        color: vColor,
-      }}
-      initial={{ opacity: 0.85, textShadow: "0 0 10px rgba(237,232,213,0.28)" }}
-      animate={invertidaVBlinkAnimate}
-      transition={{
-        opacity: { ...vBlinkTransition, delay: 0.5 },
-        textShadow: vBlinkTransition,
-      }}
-    >
-      por Nazaret Montes
-    </motion.p>
+    <CoverCreditWrap>
+      <motion.p
+        style={textStyle}
+        initial={{ opacity: 0.85, textShadow: "0 0 10px rgba(237,232,213,0.28)" }}
+        animate={invertidaVBlinkAnimate}
+        transition={{
+          opacity: { ...vBlinkTransition, delay: 0.5 },
+          textShadow: vBlinkTransition,
+        }}
+      >
+        Naz Montés
+      </motion.p>
+    </CoverCreditWrap>
   );
 }
 
@@ -1804,13 +1962,14 @@ export function CoverTitle({
         );
       }
       if (
-        palette === "raiz" ||
+        isSelvaStyle(palette as PaletteId) ||
         palette === "raiz_helecho" ||
         palette === "raiz_petroleo" ||
         palette === "raiz_niebla" ||
         palette === "raiz_pino"
       ) {
-        const isSelva = palette === "raiz";
+        const isSelva = isSelvaStyle(palette as PaletteId);
+        const isPetroleo = palette === "raiz_petroleo";
         const isHelechoPalette = palette === "raiz_helecho";
         const isNiebla = palette === "raiz_niebla";
         const isPino = palette === "raiz_pino";
@@ -1818,28 +1977,57 @@ export function CoverTitle({
         const useSelvaDrip = isSelva || isHelechoPalette;
         const darkTitle = isNiebla || isPino;
         const titleInk = theme.titleLetters ?? theme.text ?? NIEBLA_BLACK;
-        const selvaInk = theme.titleLetters ?? RAIZ_OXIDO;
+        const selvaInk = theme.titleLetters ?? theme.accent ?? RAIZ_OXIDO;
+        const selvaJointStroke =
+          palette === "raiz_black" ? "#050504" : palette === "raiz_forest" ? "#7A4A32" : "#3D2E24";
         return (
           <HelechoTitleRow
             letterColor={darkTitle ? titleInk : selvaInk}
             whiteBlink={palette === "raiz_petroleo" || (jointTear && !isHelechoPalette)}
             vColor={darkTitle ? titleInk : selvaInk}
             halo={darkTitle || isSelva ? "black" : "cyan"}
-            dripVariant={isPino ? "pino" : useSelvaDrip ? "selva" : jointTear ? "niebla" : "helecho"}
+            dripVariant={
+              isPino
+                ? "pino"
+                : useSelvaDrip
+                  ? "selva"
+                  : isPetroleo
+                    ? "petroleo"
+                    : jointTear
+                      ? "niebla"
+                      : "helecho"
+            }
             scaleX={
               isSelva
                 ? SELVA_TITLE_SCALE_X
-                : isHelechoPalette
-                  ? HELECHO_TITLE_SCALE_X
-                  : jointTear
-                    ? NIEBLA_TITLE_SCALE_X
-                    : undefined
+                : isPetroleo
+                  ? PETROLEO_TITLE_SCALE_X
+                  : isHelechoPalette
+                    ? HELECHO_TITLE_SCALE_X
+                    : isNiebla
+                      ? NIEBLA_TITLE_SCALE_X
+                      : jointTear
+                        ? PINO_TITLE_SCALE_X
+                        : undefined
+            }
+            letterGap={
+              isPetroleo
+                ? ESMERALDA_TITLE_LETTER_GAP
+                : isNiebla
+                  ? NIEBLA_TITLE_LETTER_GAP
+                  : undefined
             }
             jointTearColor={
-              isPino ? NIEBLA_BLACK : isNiebla ? MEZCLA_RED : isSelva ? RAIZ_OXIDO : undefined
+              isPino
+                ? NIEBLA_BLACK
+                : isNiebla
+                  ? MEZCLA_RED
+                  : isSelva
+                    ? (theme.accent ?? selvaInk)
+                    : undefined
             }
-            jointTearStroke={isPino ? "#052525" : isSelva ? "#3D2E24" : undefined}
-            selvaCamoInk={isHelechoPalette ? HELECHO_BG : undefined}
+            jointTearStroke={isPino ? "#052525" : isSelva ? selvaJointStroke : undefined}
+            selvaCamoInk={isHelechoPalette ? HELECHO_BG : isSelva ? theme.bg : undefined}
             selvaDropInk={isHelechoPalette ? HELECHO_CYAN : undefined}
           />
         );
