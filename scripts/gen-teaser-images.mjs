@@ -5,8 +5,11 @@ const dir = path.resolve("public/images/teaser/nuevas");
 const base = "/images/teaser/nuevas";
 /** Archivos excluidos del montaje (p. ej. cactus u otras imágenes fuera de tema) */
 const EXCLUDE_FILES = new Set([
+  "alina-bordunova-DMDnBwER9kk-unsplash.jpg",
   "engin-akyurt-Z4qyCS3ohYE-unsplash.jpg",
   "chris-yang-wHnvP5M95OE-unsplash.jpg",
+  "annie-spratt-EoP0hx9bybY-unsplash.jpg",
+  "nationaal-archief-Nifnvokdv_o-unsplash.jpg",
 ]);
 const files = fs
   .readdirSync(dir)

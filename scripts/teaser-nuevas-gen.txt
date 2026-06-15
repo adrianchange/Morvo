@@ -31,7 +31,6 @@
   { id: "nueva-annie-spratt-adhy6hs4sis-unsplash", label: "Annie Spratt ADhy6hS4sIs", url: localImage("/images/teaser/nuevas/annie-spratt-ADhy6hS4sIs-unsplash.jpg") },
   { id: "nueva-annie-spratt-swg5qzkntx0-unsplash", label: "Annie Spratt Swg5qZkNtX0", url: localImage("/images/teaser/nuevas/annie-spratt-swg5qZkNtX0-unsplash.jpg") },
   { id: "nueva-cesar-cabrera-azqlozh2dzk-unsplash", label: "Cesar Cabrera AZqloZH2dzk", url: localImage("/images/teaser/nuevas/cesar-cabrera-aZqloZH2dzk-unsplash.jpg") },
-  { id: "nueva-chris-yang-whnvp5m95oe-unsplash", label: "Chris Yang WHnvP5M95OE", url: localImage("/images/teaser/nuevas/chris-yang-wHnvP5M95OE-unsplash.jpg") },
   { id: "nueva-darya-jum-vswzcbv4ma8-unsplash", label: "Darya Jum VSWzcbV4Ma8", url: localImage("/images/teaser/nuevas/darya-jum-VSWzcbV4Ma8-unsplash.jpg") },
   { id: "nueva-dmytro-koplyk-rfpa05ckcu4-unsplash", label: "Dmytro Koplyk RfPA05CKCu4", url: localImage("/images/teaser/nuevas/dmytro-koplyk-rfPA05CKCu4-unsplash.jpg") },
   { id: "nueva-engin-akyurt-z4qycs3ohye-unsplash", label: "Engin Akyurt Z4qyCS3ohYE", url: localImage("/images/teaser/nuevas/engin-akyurt-Z4qyCS3ohYE-unsplash.jpg") },
@@ -43,7 +42,6 @@
   { id: "nueva-maksym-tymchyk-hjk5hgtehia-unsplash", label: "Maksym Tymchyk Hjk5hgTEHIA", url: localImage("/images/teaser/nuevas/maksym-tymchyk-Hjk5hgTEHIA-unsplash.jpg") },
   { id: "nueva-max-bender-qm9-mgycw4a-unsplash", label: "Max Bender Qm9_Mgycw4A", url: localImage("/images/teaser/nuevas/max-bender-Qm9_Mgycw4A-unsplash.jpg") },
   { id: "nueva-moreno-matkovic-a1s-sewdgru-unsplash", label: "Moreno Matkovic A1S_sEWdgRU", url: localImage("/images/teaser/nuevas/moreno-matkovic-A1S_sEWdgRU-unsplash.jpg") },
-  { id: "nueva-nationaal-archief-nifnvokdv-o-unsplash", label: "Nationaal Archief Nifnvokdv_o", url: localImage("/images/teaser/nuevas/nationaal-archief-Nifnvokdv_o-unsplash.jpg") },
   { id: "nueva-pavel-neznanov-d4jtuffffks-unsplash", label: "Pavel Neznanov D4JTUfFfFKs", url: localImage("/images/teaser/nuevas/pavel-neznanov-d4JTUfFfFKs-unsplash.jpg") },
   { id: "nueva-ranurte-vft5fphftri-unsplash", label: "Ranurte Vft5FphFtRI", url: localImage("/images/teaser/nuevas/ranurte-Vft5FphFtRI-unsplash.jpg") },
   { id: "nueva-ruby-khoesial-fjqvnfx-czm-unsplash", label: "Ruby Khoesial FjqvNFX CzM", url: localImage("/images/teaser/nuevas/ruby-khoesial-FjqvNFX-czM-unsplash.jpg") },
@@ -53,7 +51,6 @@
 ===RITUAL===
   { id: "nueva-alina-bordunova-dmdnbwer9kk-unsplash", label: "Alina Bordunova DMDnBwER9kk", url: localImage("/images/teaser/nuevas/alina-bordunova-DMDnBwER9kk-unsplash.jpg") },
   { id: "nueva-andrey-metelev-st5klh5ylqk-unsplash", label: "Andrey Metelev ST5Klh5YlQk", url: localImage("/images/teaser/nuevas/andrey-metelev-sT5Klh5YlQk-unsplash.jpg") },
-  { id: "nueva-annie-spratt-eop0hx9byby-unsplash", label: "Annie Spratt EoP0hx9bybY", url: localImage("/images/teaser/nuevas/annie-spratt-EoP0hx9bybY-unsplash.jpg") },
   { id: "nueva-annie-spratt-wsjyjxtgjtc-unsplash", label: "Annie Spratt WSJyJxTGJTc", url: localImage("/images/teaser/nuevas/annie-spratt-wSJyJxTGJTc-unsplash.jpg") },
   { id: "nueva-charlesdeluvio-qb7y8vnn-zi-unsplash", label: "Charlesdeluvio QB7y8Vnn ZI", url: localImage("/images/teaser/nuevas/charlesdeluvio-QB7y8Vnn-ZI-unsplash.jpg") },
   { id: "nueva-christelle-hayek-idd7hb87cda-unsplash", label: "Christelle Hayek IdD7HB87CdA", url: localImage("/images/teaser/nuevas/christelle-hayek-IdD7HB87CdA-unsplash.jpg") },

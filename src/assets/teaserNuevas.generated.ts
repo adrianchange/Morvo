@@ -58,7 +58,6 @@ export const TEASER_NUEVAS_FUEGO: StockImage[] = [
 export const TEASER_NUEVAS_RITUAL: StockImage[] = [
   { id: "nueva-alina-bordunova-dmdnbwer9kk-unsplash", label: "Alina Bordunova DMDnBwER9kk", url: "/images/teaser/nuevas/alina-bordunova-DMDnBwER9kk-unsplash.jpg" },
   { id: "nueva-andrey-metelev-st5klh5ylqk-unsplash", label: "Andrey Metelev ST5Klh5YlQk", url: "/images/teaser/nuevas/andrey-metelev-sT5Klh5YlQk-unsplash.jpg" },
-  { id: "nueva-annie-spratt-eop0hx9byby-unsplash", label: "Annie Spratt EoP0hx9bybY", url: "/images/teaser/nuevas/annie-spratt-EoP0hx9bybY-unsplash.jpg" },
   { id: "nueva-annie-spratt-wsjyjxtgjtc-unsplash", label: "Annie Spratt WSJyJxTGJTc", url: "/images/teaser/nuevas/annie-spratt-wSJyJxTGJTc-unsplash.jpg" },
   { id: "nueva-charlesdeluvio-qb7y8vnn-zi-unsplash", label: "Charlesdeluvio QB7y8Vnn ZI", url: "/images/teaser/nuevas/charlesdeluvio-QB7y8Vnn-ZI-unsplash.jpg" },
   { id: "nueva-cristiano-valadar-pxdhdla1b50-unsplash", label: "Cristiano Valadar PxdhDlA1B50", url: "/images/teaser/nuevas/cristiano-valadar-pxdhDlA1B50-unsplash.jpg" },
@@ -72,7 +71,6 @@ export const TEASER_NUEVAS_RITUAL: StockImage[] = [
   { id: "nueva-maksym-tymchyk-hjk5hgtehia-unsplash", label: "Maksym Tymchyk Hjk5hgTEHIA", url: "/images/teaser/nuevas/maksym-tymchyk-Hjk5hgTEHIA-unsplash.jpg" },
   { id: "nueva-max-bender-qm9-mgycw4a-unsplash", label: "Max Bender Qm9_Mgycw4A", url: "/images/teaser/nuevas/max-bender-Qm9_Mgycw4A-unsplash.jpg" },
   { id: "nueva-moreno-matkovic-a1s-sewdgru-unsplash", label: "Moreno Matkovic A1S_sEWdgRU", url: "/images/teaser/nuevas/moreno-matkovic-A1S_sEWdgRU-unsplash.jpg" },
-  { id: "nueva-nationaal-archief-nifnvokdv-o-unsplash", label: "Nationaal Archief Nifnvokdv_o", url: "/images/teaser/nuevas/nationaal-archief-Nifnvokdv_o-unsplash.jpg" },
   { id: "nueva-pavel-neznanov-d4jtuffffks-unsplash", label: "Pavel Neznanov D4JTUfFfFKs", url: "/images/teaser/nuevas/pavel-neznanov-d4JTUfFfFKs-unsplash.jpg" },
   { id: "nueva-ranurte-vft5fphftri-unsplash", label: "Ranurte Vft5FphFtRI", url: "/images/teaser/nuevas/ranurte-Vft5FphFtRI-unsplash.jpg" },
   { id: "nueva-ruby-khoesial-fjqvnfx-czm-unsplash", label: "Ruby Khoesial FjqvNFX CzM", url: "/images/teaser/nuevas/ruby-khoesial-FjqvNFX-czM-unsplash.jpg" },

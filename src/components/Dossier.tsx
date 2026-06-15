@@ -9,6 +9,7 @@ import { CharacterSlide } from "./slides/CharacterSlide";
 import { FlyerSlide } from "./slides/FlyerSlide";
 import { SynopsisSlide } from "./slides/SynopsisSlide";
 import { TeaserSlide } from "./slides/TeaserSlide";
+import { preloadTeaserCoverImages } from "./TeaserVideo";
 
 type Props = {
   paletteId: PaletteId;
@@ -29,6 +30,10 @@ export function Dossier({ paletteId, onBack }: Props) {
 
   const prev = useCallback(() => {
     setIndex((i) => (i - 1 + SLIDE_COUNT) % SLIDE_COUNT);
+  }, []);
+
+  useEffect(() => {
+    void preloadTeaserCoverImages();
   }, []);
 
   useEffect(() => {

@@ -225,10 +225,8 @@ export const TEASER_MONTAGE_POOL = interleaveTeaserPools(
 );
 
 /** Solo antes del pitido — familia, niños, cumpleaños (selección fija) */
-export const TEASER_FAMILIA_URLS: string[] = [
-  "/images/teaser/nuevas/alina-bordunova-DMDnBwER9kk-unsplash.jpg",
+const TEASER_FAMILIA_BASE_URLS: string[] = [
   "/images/teaser/nuevas/annie-spratt-77Faqk66Ixc-unsplash.jpg",
-  "/images/teaser/nuevas/annie-spratt-EoP0hx9bybY-unsplash.jpg",
   "/images/teaser/nuevas/annie-spratt-nG7vuM7SBm8-unsplash.jpg",
   "/images/teaser/nuevas/annie-spratt-swg5qZkNtX0-unsplash.jpg",
   "/images/teaser/nuevas/annie-spratt-wSJyJxTGJTc-unsplash.jpg",
@@ -244,7 +242,6 @@ export const TEASER_FAMILIA_URLS: string[] = [
   "/images/teaser/nuevas/juan-saav-iFBXPq6opqE-unsplash.jpg",
   "/images/teaser/nuevas/la-compagnie-robinson-KGQlg-K4VWA-unsplash.jpg",
   "/images/teaser/nuevas/lifetime-leather-X875kk9-rnU-unsplash.jpg",
-  "/images/teaser/nuevas/nationaal-archief-Nifnvokdv_o-unsplash.jpg",
   "/images/teaser/nuevas/o-kunh-o0hLQIh8QhU-unsplash.jpg",
   "/images/teaser/nuevas/pablo-hernandez-YXyYCw8ioXA-unsplash.jpg",
   "/images/teaser/nuevas/pavel-neznanov-d4JTUfFfFKs-unsplash.jpg",
@@ -256,12 +253,81 @@ export const TEASER_FAMILIA_URLS: string[] = [
   "/images/teaser/nuevas/zoshua-colah-CUka1SutO5Q-unsplash.jpg",
 ];
 
+const TEASER_FAMILIA_INSERT_URLS: string[] = [
+  "/images/teaser/nuevas/christian-harb-DXOM4iEVHZg-unsplash.jpg",
+  "/images/teaser/nuevas/jr-korpa-NDUjrvZKMeE-unsplash.jpg",
+  "/images/teaser/nuevas/cole-parks-V0od6_EwShM-unsplash.jpg",
+  "/images/teaser/nuevas/sebastian-schuster-RCeQ1SrBOGs-unsplash.jpg",
+  "/images/teaser/nuevas/elena-mozhvilo-S1maLp-w81o-unsplash.jpg",
+  "/images/teaser/nuevas/anton-pavlov-BCazFs7jWF8-unsplash.jpg",
+  "/images/teaser/nuevas/gravity-vStkVmrfTrw-unsplash.jpg",
+  "/images/teaser/nuevas/federica-giusti-my6gx6s_Fr8-unsplash.jpg",
+  "/images/teaser/nuevas/sergey-vinogradov-VjcUuHNidgo-unsplash.jpg",
+  "/images/teaser/nuevas/jr-korpa-AK7rrIAldDg-unsplash.jpg",
+];
+
+/** Inserta fotos nuevas entre bloques del montaje (sin seguidas) */
+function interleaveMontageInserts(base: readonly string[], inserts: readonly string[]): string[] {
+  if (inserts.length === 0) return [...base];
+
+  const chunkSize = Math.ceil(base.length / inserts.length);
+  const out: string[] = [];
+  let baseIdx = 0;
+
+  for (let i = 0; i < inserts.length; i++) {
+    const chunkEnd = i === inserts.length - 1 ? base.length : Math.min(base.length, (i + 1) * chunkSize);
+    while (baseIdx < chunkEnd) {
+      out.push(base[baseIdx++]);
+    }
+    out.push(inserts[i]);
+  }
+
+  while (baseIdx < base.length) out.push(base[baseIdx++]);
+  return out;
+}
+
+export const TEASER_FAMILIA_URLS: string[] = interleaveMontageInserts(
+  TEASER_FAMILIA_BASE_URLS,
+  TEASER_FAMILIA_INSERT_URLS,
+);
+
 const TEASER_FAMILIA_SET = new Set(TEASER_FAMILIA_URLS);
+
+/** Nuevas fotos intercaladas en el 2.º montaje (ritual, fuego, surreal…) */
+const TEASER_REST_INSERT_URLS: string[] = [
+  "/images/teaser/nuevas/sergey-vinogradov-TI-eDUB8P7U-unsplash.jpg",
+  "/images/teaser/nuevas/pranav-ck-g1dKoyNCUPU-unsplash.jpg",
+  "/images/teaser/nuevas/mikita-karasiou-dSbPtJHukVE-unsplash.jpg",
+  "/images/teaser/nuevas/joey-nicotra-jaWsWDzCXSQ-unsplash.jpg",
+  "/images/teaser/nuevas/klara-kulikova-VfkC3fDfeHs-unsplash-kiss.jpg",
+  "/images/teaser/nuevas/tommaso-ubezio-4c2aeV4gsGE-unsplash.jpg",
+  "/images/teaser/nuevas/manyu-varma-ef3A5EDR7Jk-unsplash.jpg",
+  "/images/teaser/nuevas/luka-peters-tD2HNVUtxc8-unsplash.jpg",
+  "/images/teaser/nuevas/jeffrey-keenan-w_QxS8ZfFhk-unsplash.jpg",
+  "/images/teaser/nuevas/alex-shuper-SNliMkZHVig-unsplash.jpg",
+  "/images/teaser/nuevas/alex-shuper-Zj4O7gGT-uw-unsplash.jpg",
+  "/images/teaser/nuevas/nahid-hatami-tUXjhvLxmYk-unsplash.jpg",
+];
+
+/** URLs que no deben entrar en el montaje */
+const TEASER_EXCLUDED_URLS = new Set([
+  "/images/teaser/nuevas/alina-bordunova-DMDnBwER9kk-unsplash.jpg",
+  "/images/teaser/nuevas/chris-yang-wHnvP5M95OE-unsplash.jpg",
+  "/images/teaser/nuevas/annie-spratt-EoP0hx9bybY-unsplash.jpg",
+  "/images/teaser/nuevas/nationaal-archief-Nifnvokdv_o-unsplash.jpg",
+  "/images/teaser/nuevas/wolfgang-hasselmann-qqaxfqr_jss-unsplash.jpg",
+]);
 
 /** Imágenes del montaje que no se usan en el primer tramo */
 export function teaserRestPool(montagePool: string[], extra: string[] = []): string[] {
   const all = [...montagePool, ...extra];
-  return all.filter((url) => !TEASER_FAMILIA_SET.has(url));
+  return all.filter((url) => !TEASER_FAMILIA_SET.has(url) && !TEASER_EXCLUDED_URLS.has(url));
+}
+
+/** 2.ª parte del teaser — pool base + inserts intercalados */
+export function buildTeaserRestImages(extra: string[] = []): string[] {
+  const base = teaserRestPool(TEASER_MONTAGE_POOL, extra);
+  return interleaveMontageInserts(base, TEASER_REST_INSERT_URLS);
 }
 
 /** Buscar por id dentro del banco */

@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState, useCallback, useMemo, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useCallback, useMemo, type CSSProperties } from "react";
 import { motion } from "framer-motion";
 import {
   TEASER_FAMILIA_URLS,
-  TEASER_MONTAGE_POOL,
-  teaserRestPool,
+  buildTeaserRestImages,
 } from "../assets/stockImages";
 
-import { ACTIVE_TEASER_AUDIO } from "../assets/teaserAudio";
+import { ACTIVE_TEASER_AUDIO, type TeaserAudioPreset } from "../assets/teaserAudio";
+import { useIsMobile } from "../hooks/useIsMobile";
 import {
   TEASER_FAMILIA_BEAT_CUTS_MS,
   TEASER_FAMILIA_USE_BEAT_SYNC,
@@ -17,10 +17,33 @@ const MASK_HORSE_SHOP = "https://images.unsplash.com/photo-1516944486937-aca8e1c
 const MASK_CREEPY = "https://images.unsplash.com/photo-1724380597255-944485791d3d?w=800&h=450&fit=crop&auto=format";
 const MASK_HORNS = "https://images.unsplash.com/photo-1736507020688-414d0f88f6b5?w=800&h=450&fit=crop&auto=format";
 const WOLVES_IMG = "https://images.unsplash.com/photo-1518504361720-82ccdc540022?w=800&h=450&fit=crop&auto=format";
+const MORVO_FINAL_BG = "/images/teaser/morvo-final-paris-bilal.png";
+const TEASER_COVER_BG = "/images/teaser/teaser-cover-paris-bilal-arches.jpg";
+const TEASER_TYPEWRITER_BG = "/images/teaser/teaser-cover-mainak-bose.jpg";
+const TYPEWRITER_TEXT_COLOR = "#F2EBE0";
+const TYPEWRITER_ACCENT_COLOR = "#E85D4C";
+const TEASER_COVER_LINE_TOP = "Compañía OBSCENA TEATRAL";
+const TEASER_COVER_LINE_BOTTOM = "PRESENTA";
+/** 2.ª frase empieza aquí (s) */
+const SECOND_PHRASE_START_MS = 30_000;
+/** Portada con crédito de producción */
+const TEASER_COVER_MS = 5_000;
 
 const EXTRA_TEASER_IMAGES = [SEQUOIA_IMG, MASK_HORSE_SHOP, MASK_CREEPY, MASK_HORNS, WOLVES_IMG];
-const TEASER_REST_IMAGES = teaserRestPool(TEASER_MONTAGE_POOL, EXTRA_TEASER_IMAGES);
-const ALL_TEASER_IMAGES = [...TEASER_FAMILIA_URLS, ...TEASER_REST_IMAGES];
+const TEASER_REST_IMAGES = buildTeaserRestImages(EXTRA_TEASER_IMAGES);
+const FAMILY_MONTAGE_ELENA_MUSHROOM =
+  "/images/teaser/nuevas/elena-mozhvilo-hmcF-Lx9jig-unsplash.jpg";
+const FAMILY_MONTAGE_LIANA_HAND = "/images/teaser/nuevas/liana-s-JsXDxr4eI0Y-unsplash.jpg";
+
+const ALL_TEASER_IMAGES = [
+  ...TEASER_FAMILIA_URLS,
+  FAMILY_MONTAGE_ELENA_MUSHROOM,
+  FAMILY_MONTAGE_LIANA_HAND,
+  ...TEASER_REST_IMAGES,
+  TEASER_COVER_BG,
+  TEASER_TYPEWRITER_BG,
+  MORVO_FINAL_BG,
+];
 
 const SALMON = "#FA8072";
 const BLACK = "#000000";
@@ -35,30 +58,45 @@ const INTRO_HOLD_MS = 800;
 const INTRO_TYPEWRITER_MS = INTRO_REVEAL_MS + INTRO_HOLD_MS;
 const OVERLAY_REVEAL_MS = 4_000;
 const OVERLAY_HOLD_MS = 800;
-/** Pitido/sintetizador — rellena el hueco (tiempo recuperado sin énfasis aislados) */
-const SYNTH_FILL_MS = 8_000;
+/** Tras la 2.ª frase — pitido / relleno (recortado para fundido de textos portada → 1.ª frase) */
+const SYNTH_FILL_MS = 1_000;
 const SYNTH_MIDDLE_MS = OVERLAY_REVEAL_MS + OVERLAY_HOLD_MS + SYNTH_FILL_MS;
 const OVERLAY_TEXT_MS = OVERLAY_REVEAL_MS + OVERLAY_HOLD_MS;
 const AUDIO_BRIDGE_FADE_MS = 900;
+/** Salta los primeros N s del archivo de audio al reproducir */
+const AUDIO_START_TRIM_MS = 4_000;
 /** Fade de cierre — últimos 3 s del teaser */
 const AUDIO_END_FADE_MS = 3_000;
-/** MORVO parpadeando — cierre del teaser */
-const MORVO_FINAL_MS = 2_000;
-/** Duración total del teaser */
-const TOTAL_TEASER_MS =
-  52_000 + (INTRO_TYPEWRITER_MS - 5_500) + (SYNTH_MIDDLE_MS - 4_500);
-/** ~0,8 s por foto de familia (28 fotos → 22,4 s) */
-const FAMILY_MONTAGE_CUT_MS = 800;
-const FAMILY_MONTAGE_MS = TEASER_FAMILIA_URLS.length * FAMILY_MONTAGE_CUT_MS;
-const REST_MONTAGE_MS =
-  TOTAL_TEASER_MS -
-  INTRO_TYPEWRITER_MS -
-  SYNTH_MIDDLE_MS -
-  MORVO_FINAL_MS -
-  FAMILY_MONTAGE_MS;
+/** MORVO + créditos de reparto — cierre del teaser */
+const MORVO_FINAL_MS = 5_000;
+
+const TEASER_CAST = [
+  { character: "Mario", actor: "Javier Estévez" },
+  { character: "Víctor", actor: "Adrian Popovici" },
+  { character: "Cristian", actor: "Ciprian Gheorghe" },
+] as const;
+
+/** Duración objetivo del teaser */
+const TARGET_TOTAL_MS = 60_000;
+
+/** Tramo 1: portada + 1.ª frase + montaje familia → 2.ª frase a los 30 s */
+const FAMILY_MONTAGE_MS = SECOND_PHRASE_START_MS - TEASER_COVER_MS - INTRO_TYPEWRITER_MS;
+
+const FIXED_BEFORE_REST_MS =
+  TEASER_COVER_MS + INTRO_TYPEWRITER_MS + FAMILY_MONTAGE_MS + SYNTH_MIDDLE_MS + MORVO_FINAL_MS;
+const REST_MONTAGE_MS = TARGET_TOTAL_MS - FIXED_BEFORE_REST_MS;
+
+const TOTAL_TEASER_MS = TARGET_TOTAL_MS;
+
 const MUSIC1_SECTION_MS = INTRO_TYPEWRITER_MS + FAMILY_MONTAGE_MS;
-const MUSIC2_START_MS = MUSIC1_SECTION_MS + SYNTH_MIDDLE_MS;
+const MUSIC1_SECTION_WALL_MS = TEASER_COVER_MS + MUSIC1_SECTION_MS;
+const MUSIC2_START_WALL_MS = MUSIC1_SECTION_WALL_MS + SYNTH_MIDDLE_MS;
 const MUSIC2_SECTION_MS = REST_MONTAGE_MS;
+const TEASER_COVER_SEC = TEASER_COVER_MS / 1000;
+
+function teaserContentSec(elapsedSec: number): number {
+  return Math.max(0, elapsedSec - TEASER_COVER_SEC);
+}
 
 function teaserEndVolume(elapsedSec: number, teaserEndSec: number, baseVolume: number): number {
   const fadeSec = AUDIO_END_FADE_MS / 1000;
@@ -75,6 +113,7 @@ type Frame = {
   bg?: string;
   bgImg?: string;
   morvo?: boolean;
+  presenta?: boolean;
   typewriter?: boolean;
   overlayText?: string;
   fit?: ImageFit;
@@ -118,23 +157,148 @@ function buildTimedMontage(
   }));
 }
 
+const FAMILY_MONTAGE_START_MS = TEASER_COVER_MS + INTRO_TYPEWRITER_MS;
+/** Fundido portada → 1.ª frase */
+const COVER_TO_TYPEWRITER_FADE_MS = 1_200;
+const COVER_TO_TYPEWRITER_FADE_START_MS = TEASER_COVER_MS - COVER_TO_TYPEWRITER_FADE_MS;
+
+function coverToTypewriterFadeT(elapsedMs: number): number {
+  if (elapsedMs <= COVER_TO_TYPEWRITER_FADE_START_MS) return 0;
+  if (elapsedMs >= TEASER_COVER_MS) return 1;
+  return (elapsedMs - COVER_TO_TYPEWRITER_FADE_START_MS) / COVER_TO_TYPEWRITER_FADE_MS;
+}
+
+const crossfadeGpuLayerStyle: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  willChange: "opacity",
+  WebkitBackfaceVisibility: "hidden",
+  backfaceVisibility: "hidden",
+  transform: "translateZ(0)",
+};
+
+/** Fundido textos portada → 1.ª frase (solapado, en ms de pared) */
+const COVER_TITLE_FADE_START_MS = TEASER_COVER_MS - 900;
+const COVER_TITLE_FADE_END_MS = TEASER_COVER_MS + 400;
+const INTRO_PHRASE_FADE_IN_MS = 1_400;
+const INTRO_PHRASE_DELAY_MS = 550;
+
+function coverPresentaOpacity(elapsedMs: number): number {
+  if (elapsedMs < COVER_TITLE_FADE_START_MS) return 1;
+  if (elapsedMs >= COVER_TITLE_FADE_END_MS) return 0;
+  return 1 - (elapsedMs - COVER_TITLE_FADE_START_MS) / (COVER_TITLE_FADE_END_MS - COVER_TITLE_FADE_START_MS);
+}
+
+function introPhraseOpacity(elapsedMs: number): number {
+  if (elapsedMs < TEASER_COVER_MS) return 0;
+  const end = TEASER_COVER_MS + INTRO_PHRASE_FADE_IN_MS;
+  if (elapsedMs >= end) return 1;
+  return (elapsedMs - TEASER_COVER_MS) / INTRO_PHRASE_FADE_IN_MS;
+}
+
+function introPhraseLocalMs(elapsedMs: number): number {
+  return Math.max(0, elapsedMs - TEASER_COVER_MS - INTRO_PHRASE_DELAY_MS);
+}
+
+function familyMontageIndexAtMs(elapsedMs: number, photoCount: number): number {
+  const t = elapsedMs - FAMILY_MONTAGE_START_MS;
+  if (t < 0) return 0;
+  const base = Math.floor(FAMILY_MONTAGE_MS / photoCount);
+  const extra = FAMILY_MONTAGE_MS % photoCount;
+  let acc = 0;
+  for (let i = 0; i < photoCount; i++) {
+    acc += base + (i < extra ? 1 : 0);
+    if (t < acc) return i;
+  }
+  return photoCount - 1;
+}
+
+/** Segundos de pared calibrados con portada 3 s — se desplazan si TEASER_COVER_MS cambia */
+const LEGACY_COVER_MS = 3_000;
+
+function wallMsFromLegacySecond(second: number): number {
+  return second * 1000 + (TEASER_COVER_MS - LEGACY_COVER_MS);
+}
+
+function familyMontageIndexAtLegacySecond(second: number, photoCount: number): number {
+  return familyMontageIndexAtMs(wallMsFromLegacySecond(second), photoCount);
+}
+
+function montageIndicesInLegacySecond(second: number, photoCount: number): number[] {
+  const out: number[] = [];
+  const start = wallMsFromLegacySecond(second);
+  const end = start + 1000;
+  for (let ms = start; ms < end; ms += 50) {
+    const idx = familyMontageIndexAtMs(ms, photoCount);
+    if (!out.includes(idx)) out.push(idx);
+  }
+  return out;
+}
+
+function insertUrlAfter(pool: string[], afterIndex: number, url: string): string[] {
+  const at = afterIndex + 1;
+  return [...pool.slice(0, at), url, ...pool.slice(at)];
+}
+
+function insertUrlBefore(pool: string[], beforeIndex: number, url: string): string[] {
+  return [...pool.slice(0, beforeIndex), url, ...pool.slice(beforeIndex)];
+}
+
+/** Inserta en s 9–12 las fotos que caían en s 25 y s 27; setas (s 12) y mano magenta (antes de s 13) */
+function buildFamilyMontageUrls(): string[] {
+  const urls = TEASER_FAMILIA_URLS;
+  const n = urls.length;
+  const earlyIdx = [9, 10, 11, 12].map((s) => familyMontageIndexAtLegacySecond(s, n));
+  const ins25 = familyMontageIndexAtLegacySecond(25, n);
+  const ins27 = familyMontageIndexAtLegacySecond(27, n);
+  const skip = new Set([...earlyIdx, ins25, ins27]);
+  const earlyBlock = [
+    urls[earlyIdx[0]!],
+    urls[ins25]!,
+    urls[earlyIdx[1]!],
+    urls[ins27]!,
+    urls[earlyIdx[2]!],
+    urls[earlyIdx[3]!],
+  ].filter((url, i, arr) => url && arr.indexOf(url) === i);
+  const tail = urls.filter((_, i) => !skip.has(i));
+  let pool = [...earlyBlock, ...tail];
+
+  const s12 = montageIndicesInLegacySecond(12, pool.length);
+  const s13Photo = pool[familyMontageIndexAtLegacySecond(13, pool.length)];
+
+  if (s12.length >= 2) {
+    pool = insertUrlAfter(pool, s12[0]!, FAMILY_MONTAGE_ELENA_MUSHROOM);
+  }
+
+  if (s13Photo) {
+    const s13Idx = pool.lastIndexOf(s13Photo);
+    if (s13Idx >= 0) {
+      pool = insertUrlBefore(pool, s13Idx, FAMILY_MONTAGE_LIANA_HAND);
+    }
+  }
+
+  return pool;
+}
+
 function buildFamilyMontage(): Frame[] {
+  const pool = buildFamilyMontageUrls();
   if (
     TEASER_FAMILIA_USE_BEAT_SYNC &&
-    TEASER_FAMILIA_BEAT_CUTS_MS.length >= TEASER_FAMILIA_URLS.length
+    TEASER_FAMILIA_BEAT_CUTS_MS.length >= pool.length
   ) {
-    return buildTimedMontage(TEASER_FAMILIA_URLS, TEASER_FAMILIA_BEAT_CUTS_MS, "contain", false);
+    return buildTimedMontage(pool, TEASER_FAMILIA_BEAT_CUTS_MS, "contain", false);
   }
-  return buildUniqueMontage(TEASER_FAMILIA_URLS, FAMILY_MONTAGE_MS, "contain", false);
+  return buildUniqueMontage(pool, FAMILY_MONTAGE_MS, "contain", false);
 }
 
 function buildTeaserFrames(): Frame[] {
   return [
-    { duration: INTRO_TYPEWRITER_MS, bg: BLACK, typewriter: true },
+    { duration: TEASER_COVER_MS, bgImg: TEASER_COVER_BG, fit: "cover", presenta: true },
+    { duration: INTRO_TYPEWRITER_MS, bgImg: TEASER_TYPEWRITER_BG, fit: "cover", typewriter: true },
     ...buildFamilyMontage(),
-    { duration: SYNTH_MIDDLE_MS, bg: BLACK, overlayText: SYNTH_OVERLAY_TEXT },
+    { duration: SYNTH_MIDDLE_MS, bgImg: TEASER_TYPEWRITER_BG, fit: "cover", overlayText: SYNTH_OVERLAY_TEXT },
     ...buildUniqueMontage(TEASER_REST_IMAGES, REST_MONTAGE_MS, "contain", true),
-    { duration: MORVO_FINAL_MS, bg: BLACK, morvo: true },
+    { duration: MORVO_FINAL_MS, bgImg: MORVO_FINAL_BG, fit: "cover", morvo: true },
   ];
 }
 
@@ -188,6 +352,60 @@ function TeaserFilmGrain() {
 }
 
 const teaserImageCache = new Map<string, HTMLImageElement>();
+const teaserAudioUrlReady = new Map<string, Promise<void>>();
+
+function waitForAudioMetadata(audio: HTMLAudioElement): Promise<void> {
+  const isReady = () => audio.readyState >= HTMLMediaElement.HAVE_METADATA;
+  if (isReady()) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      clearInterval(pollId);
+      clearTimeout(timeoutId);
+      for (const ev of events) audio.removeEventListener(ev, finish);
+      resolve();
+    };
+
+    const events = ["loadedmetadata", "loadeddata", "canplay", "durationchange", "error"] as const;
+    for (const ev of events) audio.addEventListener(ev, finish);
+
+    const pollId = window.setInterval(() => {
+      if (isReady()) finish();
+    }, 120);
+
+    const timeoutId = window.setTimeout(finish, 12_000);
+
+    audio.preload = "auto";
+    audio.load();
+  });
+}
+
+function preloadTeaserAudioUrl(url: string): Promise<void> {
+  const cached = teaserAudioUrlReady.get(url);
+  if (cached) return cached;
+
+  const promise = new Promise<void>((resolve) => {
+    const probe = new Audio();
+    probe.src = url;
+    void waitForAudioMetadata(probe).then(resolve);
+  });
+
+  teaserAudioUrlReady.set(url, promise);
+  return promise;
+}
+
+function preloadTeaserAudioPreset(preset: TeaserAudioPreset): Promise<void> {
+  const urls = [
+    preset.tracks[0],
+    preset.tracks[1],
+    preset.middleTrack,
+  ].filter((url): url is string => Boolean(url));
+
+  return Promise.all(urls.map(preloadTeaserAudioUrl)).then(() => undefined);
+}
 
 function preloadTeaserImages(urls: readonly string[]): Promise<void> {
   return Promise.all(
@@ -212,6 +430,76 @@ function preloadTeaserImages(urls: readonly string[]): Promise<void> {
         }),
     ),
   ).then(() => undefined);
+}
+
+const TEASER_COVER_PRIORITY_URLS = [TEASER_COVER_BG, TEASER_TYPEWRITER_BG] as const;
+
+/** Portada visible al abrir el teaser — precarga en cuanto se importa el módulo */
+export function preloadTeaserCoverImages(): Promise<void> {
+  return preloadTeaserImages(TEASER_COVER_PRIORITY_URLS);
+}
+
+void preloadTeaserCoverImages();
+
+function TeaserCoverBackdrop() {
+  const coverUrl = teaserImageCache.get(TEASER_COVER_BG)?.src ?? TEASER_COVER_BG;
+  const [ready, setReady] = useState(() => {
+    const c = teaserImageCache.get(TEASER_COVER_BG);
+    return Boolean(c && c.complete && c.naturalWidth > 0);
+  });
+
+  useLayoutEffect(() => {
+    const cached = teaserImageCache.get(TEASER_COVER_BG);
+    if (cached?.complete && cached.naturalWidth > 0) {
+      setReady(true);
+      return;
+    }
+    const probe = cached ?? new Image();
+    const onDone = () => setReady(true);
+    probe.onload = onDone;
+    if (probe.decode) void probe.decode().then(onDone).catch(onDone);
+    if (!cached) {
+      probe.src = TEASER_COVER_BG;
+      void preloadTeaserCoverImages();
+    }
+  }, []);
+
+  return (
+    <>
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundColor: BLACK,
+          backgroundImage: `url("${coverUrl}")`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
+      <img
+        src={coverUrl}
+        alt=""
+        decoding="sync"
+        loading="eager"
+        fetchPriority="high"
+        onLoad={() => setReady(true)}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "center",
+          pointerEvents: "none",
+          userSelect: "none",
+          opacity: ready ? 1 : 0,
+          transition: ready ? "opacity 0.15s ease-out" : undefined,
+        }}
+      />
+    </>
+  );
 }
 
 function drawCoverImage(
@@ -273,14 +561,87 @@ const montageImgBaseStyle: CSSProperties = {
   userSelect: "none",
 };
 
+/** 2.ª parte: anterior a cover (canvas) + actual a contain — controlado por el padre */
+function TeaserLayeredMontage({ backSrc, frontSrc }: { backSrc: string | null; frontSrc: string }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const paintBack = useCallback(() => {
+    if (!backSrc) return;
+    const wrap = wrapRef.current;
+    const canvas = canvasRef.current;
+    const img = teaserImageCache.get(backSrc);
+    if (!wrap || !canvas || !img) return;
+
+    const w = wrap.clientWidth;
+    const h = wrap.clientHeight;
+    if (w < 2 || h < 2) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+
+    drawCoverImage(ctx, img, w, h);
+  }, [backSrc]);
+
+  useLayoutEffect(() => {
+    if (!backSrc) return;
+    if (teaserImageCache.has(backSrc)) {
+      paintBack();
+      return;
+    }
+    void preloadTeaserImages([backSrc]).then(paintBack);
+  }, [backSrc, paintBack]);
+
+  useEffect(() => {
+    if (!backSrc) return;
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+
+    const ro = new ResizeObserver(() => paintBack());
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, [backSrc, paintBack]);
+
+  const frontResolved = teaserImageCache.get(frontSrc)?.src ?? frontSrc;
+
+  return (
+    <div ref={wrapRef} style={{ position: "absolute", inset: 0, background: BLACK, overflow: "hidden" }}>
+      <canvas
+        ref={canvasRef}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block", zIndex: 0 }}
+      />
+      <img
+        src={frontResolved}
+        alt=""
+        decoding="sync"
+        style={{
+          position: "absolute",
+          left: "3.5%",
+          top: "3.5%",
+          width: "93%",
+          height: "93%",
+          objectFit: "contain",
+          objectPosition: "center",
+          pointerEvents: "none",
+          userSelect: "none",
+          zIndex: 2,
+        }}
+      />
+    </div>
+  );
+}
+
 function TeaserMontageSurface({
   src,
   fit = "cover",
-  layered = false,
 }: {
   src: string;
   fit?: ImageFit;
-  layered?: boolean;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -288,9 +649,7 @@ function TeaserMontageSurface({
   const frontRef = useRef<HTMLImageElement>(null);
   const activeLayerRef = useRef<"back" | "front">("back");
   const shownSrcRef = useRef<string | null>(null);
-  const layeredContain = layered && fit === "contain";
-  /** 1.ª parte (familia): letterbox negro vía canvas; evita bleed de la capa img anterior en móvil */
-  const canvasOnlyContain = !layeredContain && fit === "contain";
+  const canvasOnlyContain = fit === "contain";
 
   const paintCanvas = useCallback(
     (url: string) => {
@@ -318,25 +677,6 @@ function TeaserMontageSurface({
     [fit],
   );
 
-  const showLayeredContain = useCallback((url: string) => {
-    const img = teaserImageCache.get(url);
-    const back = backRef.current;
-    const front = frontRef.current;
-    if (!img || !back || !front) return false;
-
-    const prev = shownSrcRef.current;
-    if (prev && prev !== url) {
-      const prevImg = teaserImageCache.get(prev);
-      if (prevImg) back.src = prevImg.src;
-    }
-
-    front.src = img.src;
-    back.style.opacity = "1";
-    front.style.opacity = "1";
-    shownSrcRef.current = url;
-    return true;
-  }, []);
-
   const showCached = useCallback((url: string) => {
     const img = teaserImageCache.get(url);
     if (!img) return false;
@@ -360,10 +700,6 @@ function TeaserMontageSurface({
 
   const reveal = useCallback(
     (url: string) => {
-      if (layeredContain) {
-        if (showLayeredContain(url)) return;
-        return;
-      }
       if (canvasOnlyContain) {
         if (paintCanvas(url)) shownSrcRef.current = url;
         return;
@@ -371,7 +707,7 @@ function TeaserMontageSurface({
       if (!showCached(url) && !paintCanvas(url)) return;
       shownSrcRef.current = url;
     },
-    [canvasOnlyContain, layeredContain, paintCanvas, showCached, showLayeredContain],
+    [canvasOnlyContain, paintCanvas, showCached],
   );
 
   useEffect(() => {
@@ -387,7 +723,6 @@ function TeaserMontageSurface({
   }, [src, reveal]);
 
   useEffect(() => {
-    if (layeredContain) return;
     const wrap = wrapRef.current;
     if (!wrap) return;
 
@@ -398,7 +733,7 @@ function TeaserMontageSurface({
     const ro = new ResizeObserver(onResize);
     ro.observe(wrap);
     return () => ro.disconnect();
-  }, [layeredContain, paintCanvas]);
+  }, [paintCanvas]);
 
   useEffect(() => {
     if (src && teaserImageCache.has(src)) reveal(src);
@@ -406,7 +741,7 @@ function TeaserMontageSurface({
 
   const backImgStyle: CSSProperties = {
     ...montageImgBaseStyle,
-    objectFit: layeredContain ? "cover" : fit,
+    objectFit: fit,
     zIndex: 1,
     opacity: 0,
   };
@@ -420,12 +755,10 @@ function TeaserMontageSurface({
 
   return (
     <div ref={wrapRef} style={{ position: "absolute", inset: 0, background: BLACK, overflow: "hidden" }}>
-      {!layeredContain && (
-        <canvas
-          ref={canvasRef}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block", zIndex: 0 }}
-        />
-      )}
+      <canvas
+        ref={canvasRef}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block", zIndex: 0 }}
+      />
       {!canvasOnlyContain && (
         <>
           <img ref={backRef} alt="" decoding="sync" style={backImgStyle} />
@@ -460,6 +793,7 @@ const verticalGrowEase = [0.16, 1, 0.3, 1] as const;
 function TeaserTextBlock({
   font,
   accentColor,
+  textColor = WHITE,
   words,
   visible,
   pacing,
@@ -469,6 +803,7 @@ function TeaserTextBlock({
 }: {
   font: string;
   accentColor: string;
+  textColor?: string;
   words: string[];
   visible: number;
   pacing: "progressive" | "burst";
@@ -530,9 +865,9 @@ function TeaserTextBlock({
               fontWeight: 600,
               letterSpacing: uppercase ? "0.09em" : "0.035em",
               lineHeight: 1.12,
-              color: WHITE,
+              color: textColor,
               textTransform: uppercase ? "uppercase" : "none",
-              textShadow: `0 0 32px ${accentColor}44, 0 0 64px ${accentColor}18, 0 2px 20px rgba(0,0,0,0.92)`,
+              textShadow: `0 0 24px ${accentColor}55, 0 2px 16px rgba(0,0,0,0.75)`,
               marginBottom: "clamp(3px, 0.7vh, 8px)",
             }}
           >
@@ -565,6 +900,9 @@ function TeaserVerticalGrowText({
   text,
   localMs,
   accentColor,
+  textColor = WHITE,
+  scrim = false,
+  scrimOpacity = 0.38,
   pacing,
   uppercase = true,
   revealMs,
@@ -573,6 +911,9 @@ function TeaserVerticalGrowText({
   text: string;
   localMs: number;
   accentColor: string;
+  textColor?: string;
+  scrim?: boolean;
+  scrimOpacity?: number;
   pacing: "progressive" | "burst";
   uppercase?: boolean;
   revealMs: number;
@@ -589,7 +930,7 @@ function TeaserVerticalGrowText({
       style={{
         position: "absolute",
         inset: 0,
-        background: BLACK,
+        background: scrim ? `rgba(0,0,0,${scrimOpacity})` : BLACK,
         zIndex: 2,
         overflow: "hidden",
         display: "flex",
@@ -601,6 +942,7 @@ function TeaserVerticalGrowText({
       <TeaserTextBlock
         font={font}
         accentColor={accentColor}
+        textColor={textColor}
         words={words}
         visible={visible}
         pacing={pacing}
@@ -612,12 +954,53 @@ function TeaserVerticalGrowText({
   );
 }
 
+function TeaserFullscreenButton({
+  accentColor,
+  isFullscreen,
+  onToggle,
+  style,
+}: {
+  accentColor: string;
+  isFullscreen: boolean;
+  onToggle: () => void;
+  style?: CSSProperties;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggle();
+      }}
+      aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+      title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+      style={{
+        flexShrink: 0,
+        width: 34,
+        height: 34,
+        borderRadius: 6,
+        border: `1.5px solid ${accentColor}`,
+        background: "rgba(0,0,0,0.55)",
+        color: accentColor,
+        cursor: "pointer",
+        fontSize: 15,
+        lineHeight: 1,
+        padding: 0,
+        ...style,
+      }}
+    >
+      {isFullscreen ? "⤡" : "⤢"}
+    </button>
+  );
+}
+
 function TeaserControls({
   playing,
   elapsedMs,
   totalMs,
   accentColor,
   isFullscreen,
+  visible,
   onPlay,
   onPause,
   onSeek,
@@ -628,6 +1011,7 @@ function TeaserControls({
   totalMs: number;
   accentColor: string;
   isFullscreen: boolean;
+  visible: boolean;
   onPlay: () => void;
   onPause: () => void;
   onSeek: (ms: number) => void;
@@ -658,6 +1042,9 @@ function TeaserControls({
         gap: 10,
         padding: "8px 10px",
         background: "linear-gradient(to top, rgba(0,0,0,0.82), rgba(0,0,0,0.35), transparent)",
+        opacity: visible ? 1 : 0,
+        pointerEvents: visible ? "auto" : "none",
+        transition: "opacity 0.22s ease",
       }}
     >
       <button
@@ -736,27 +1123,11 @@ function TeaserControls({
           {formatTime(elapsedMs)} / {formatTime(totalMs)}
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onToggleFullscreen}
-        aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-        title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-        style={{
-          flexShrink: 0,
-          width: 34,
-          height: 34,
-          borderRadius: 6,
-          border: `1.5px solid ${accentColor}`,
-          background: "rgba(0,0,0,0.55)",
-          color: accentColor,
-          cursor: "pointer",
-          fontSize: 15,
-          lineHeight: 1,
-          padding: 0,
-        }}
-      >
-        {isFullscreen ? "⤡" : "⤢"}
-      </button>
+      <TeaserFullscreenButton
+        accentColor={accentColor}
+        isFullscreen={isFullscreen}
+        onToggle={onToggleFullscreen}
+      />
     </div>
   );
 }
@@ -768,13 +1139,18 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [imagesReady, setImagesReady] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
+  const [controlsVisible, setControlsVisible] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
+  const controlsHideTimerRef = useRef<number | null>(null);
   const frames = useMemo(() => buildTeaserFrames(), []);
   const totalMs = TOTAL_TEASER_MS;
   const frameIndex = frameIndexAt(elapsedMs, frames);
   const frame = frames[frameIndex];
   const frameLocalMs = frameLocalElapsedMs(elapsedMs, frameIndex, frames);
+  const coverPhraseFadeT = coverToTypewriterFadeT(elapsedMs);
+  const layeredBackSrc =
+    frame?.layered && frame.bgImg && frameIndex > 0 ? (frames[frameIndex - 1]?.bgImg ?? null) : null;
 
   const playAnchorRef = useRef({ wall: 0, elapsed: 0 });
   const music1Ref = useRef<HTMLAudioElement | null>(null);
@@ -857,9 +1233,51 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
     playingRef.current = playing;
   }, [playing]);
 
+  const clearControlsHideTimer = useCallback(() => {
+    if (controlsHideTimerRef.current !== null) {
+      window.clearTimeout(controlsHideTimerRef.current);
+      controlsHideTimerRef.current = null;
+    }
+  }, []);
+
+  const revealControls = useCallback(() => {
+    clearControlsHideTimer();
+    setControlsVisible(true);
+  }, [clearControlsHideTimer]);
+
+  const scheduleHideControls = useCallback(
+    (delayMs = 900) => {
+      clearControlsHideTimer();
+      controlsHideTimerRef.current = window.setTimeout(() => {
+        setControlsVisible(false);
+        controlsHideTimerRef.current = null;
+      }, delayMs);
+    },
+    [clearControlsHideTimer],
+  );
+
+  useEffect(() => {
+    if (!hasStarted) {
+      setControlsVisible(false);
+      return;
+    }
+    if (!playing) {
+      revealControls();
+      return;
+    }
+    revealControls();
+    scheduleHideControls(1200);
+    return clearControlsHideTimer;
+  }, [hasStarted, playing, revealControls, scheduleHideControls, clearControlsHideTimer]);
+
+  useEffect(() => () => clearControlsHideTimer(), [clearControlsHideTimer]);
+
   useEffect(() => {
     let cancelled = false;
-    void preloadTeaserImages(ALL_TEASER_IMAGES).then(() => {
+    void preloadTeaserCoverImages().then(() => {
+      if (cancelled) return;
+      return preloadTeaserImages(ALL_TEASER_IMAGES);
+    }).then(() => {
       if (!cancelled) setImagesReady(true);
     });
     return () => {
@@ -875,57 +1293,42 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
   }, [frameIndex, frames]);
 
   useEffect(() => {
+    let cancelled = false;
     const preset = ACTIVE_TEASER_AUDIO;
-    const a1 = new Audio(preset.tracks[0]);
-    a1.preload = "auto";
-    music1Ref.current = a1;
-    a1.load();
 
-    let a2: HTMLAudioElement | null = null;
-    if (preset.mode === "dual-with-synth" && preset.tracks[1]) {
-      a2 = new Audio(preset.tracks[1]);
-      a2.preload = "auto";
-      a2.load();
-      music2Ref.current = a2;
-    } else {
-      music2Ref.current = null;
-    }
+    void preloadTeaserAudioPreset(preset).then(() => {
+      if (cancelled) return;
 
-    let mid: HTMLAudioElement | null = null;
-    if (preset.middleTrack) {
-      mid = new Audio(preset.middleTrack);
-      mid.preload = "auto";
-      mid.load();
-      middleRef.current = mid;
-    } else {
-      middleRef.current = null;
-    }
+      const a1 = new Audio(preset.tracks[0]);
+      a1.preload = "auto";
+      music1Ref.current = a1;
 
-    const onMeta = () => {
-      const ready1 = a1.duration && Number.isFinite(a1.duration);
-      const ready2 = !a2 || (a2.duration && Number.isFinite(a2.duration));
-      const readyMid = !mid || (mid.duration && Number.isFinite(mid.duration));
-      if (ready1 && ready2 && readyMid) setAudioReady(true);
-    };
+      let a2: HTMLAudioElement | null = null;
+      if (preset.mode === "dual-with-synth" && preset.tracks[1]) {
+        a2 = new Audio(preset.tracks[1]);
+        a2.preload = "auto";
+        music2Ref.current = a2;
+      } else {
+        music2Ref.current = null;
+      }
 
-    a1.addEventListener("loadedmetadata", onMeta);
-    a1.addEventListener("durationchange", onMeta);
-    a2?.addEventListener("loadedmetadata", onMeta);
-    a2?.addEventListener("durationchange", onMeta);
-    mid?.addEventListener("loadedmetadata", onMeta);
-    mid?.addEventListener("durationchange", onMeta);
-    onMeta();
+      let mid: HTMLAudioElement | null = null;
+      if (preset.middleTrack) {
+        mid = new Audio(preset.middleTrack);
+        mid.preload = "auto";
+        middleRef.current = mid;
+      } else {
+        middleRef.current = null;
+      }
+
+      setAudioReady(true);
+    });
 
     return () => {
-      a1.removeEventListener("loadedmetadata", onMeta);
-      a1.removeEventListener("durationchange", onMeta);
-      a2?.removeEventListener("loadedmetadata", onMeta);
-      a2?.removeEventListener("durationchange", onMeta);
-      mid?.removeEventListener("loadedmetadata", onMeta);
-      mid?.removeEventListener("durationchange", onMeta);
-      a1.pause();
-      a2?.pause();
-      mid?.pause();
+      cancelled = true;
+      music1Ref.current?.pause();
+      music2Ref.current?.pause();
+      middleRef.current?.pause();
       music1Ref.current = null;
       music2Ref.current = null;
       middleRef.current = null;
@@ -977,6 +1380,19 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
     if (!a1) return;
 
     const teaserEnd = TOTAL_TEASER_MS / 1000;
+    const audioTrim = AUDIO_START_TRIM_MS / 1000;
+    const contentSec = teaserContentSec(elapsedSec);
+
+    if (elapsedSec < TEASER_COVER_SEC) {
+      a1.pause();
+      a1.volume = 0;
+      music2Ref.current?.pause();
+      if (music2Ref.current) music2Ref.current.volume = 0;
+      middleRef.current?.pause();
+      if (middleRef.current) middleRef.current.volume = 0;
+      if (Math.abs(a1.currentTime - audioTrim) > 0.25) a1.currentTime = audioTrim;
+      return;
+    }
 
     if (ACTIVE_TEASER_AUDIO.mode === "single-continuous") {
       music2Ref.current?.pause();
@@ -991,7 +1407,8 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
       }
 
       a1.volume = teaserEndVolume(elapsedSec, teaserEnd, 1);
-      const t = Math.min(elapsedSec, Math.max(0, teaserEnd - 0.05));
+      const contentEnd = teaserEnd - TEASER_COVER_SEC;
+      const t = Math.min(contentSec + audioTrim, audioTrim + Math.max(0, contentEnd - 0.05));
       if (Math.abs(a1.currentTime - t) > 0.3) a1.currentTime = t;
       if (shouldPlay && a1.paused && !a1.ended) void a1.play().catch(() => {});
       if (!shouldPlay) a1.pause();
@@ -1002,8 +1419,8 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
       music2Ref.current?.pause();
       if (music2Ref.current) music2Ref.current.volume = 0;
 
-      const middleStart = MUSIC1_SECTION_MS / 1000;
-      const middleEnd = MUSIC2_START_MS / 1000;
+      const middleStart = MUSIC1_SECTION_WALL_MS / 1000;
+      const middleEnd = MUSIC2_START_WALL_MS / 1000;
       const overlayTextEnd = middleStart + OVERLAY_TEXT_MS / 1000;
       const fadeSec = AUDIO_BRIDGE_FADE_MS / 1000;
 
@@ -1022,7 +1439,7 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
           if (middleRef.current.currentTime > 0.05) middleRef.current.currentTime = 0;
         }
         a1.volume = teaserEndVolume(elapsedSec, teaserEnd, 1);
-        const t = Math.min(elapsedSec, Math.max(0, middleStart - 0.05));
+        const t = Math.min(contentSec + audioTrim, audioTrim + Math.max(0, MUSIC1_SECTION_MS / 1000 - 0.05));
         if (Math.abs(a1.currentTime - t) > 0.3) a1.currentTime = t;
         if (shouldPlay && a1.paused && !a1.ended) void a1.play().catch(() => {});
         if (!shouldPlay) a1.pause();
@@ -1037,7 +1454,7 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
           if (elapsedSec < overlayTextEnd) {
             const into = Math.min(1, localMiddle / fadeSec);
             a1.volume = teaserEndVolume(elapsedSec, teaserEnd, Math.max(0, 1 - into * 0.88));
-            a1.currentTime = middleStart;
+            a1.currentTime = middleStart + audioTrim;
             mid.volume = teaserEndVolume(elapsedSec, teaserEnd, Math.min(1, into * 0.95));
             if (Math.abs(mid.currentTime - localMiddle) > 0.25) mid.currentTime = Math.max(0, localMiddle);
             if (shouldPlay) {
@@ -1058,7 +1475,7 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
         } else if (elapsedSec < overlayTextEnd) {
           const into = Math.min(1, localMiddle / fadeSec);
           a1.volume = teaserEndVolume(elapsedSec, teaserEnd, Math.max(0, 1 - into * 0.88));
-          a1.currentTime = middleStart;
+          a1.currentTime = middleStart + audioTrim;
           if (shouldPlay && a1.paused && !a1.ended) void a1.play().catch(() => {});
           if (!shouldPlay) a1.pause();
         } else {
@@ -1071,7 +1488,7 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
       middleRef.current?.pause();
       if (middleRef.current) middleRef.current.volume = 0;
 
-      const t = middleStart + (elapsedSec - middleEnd);
+      const t = middleStart + (elapsedSec - middleEnd) + audioTrim;
       a1.volume = teaserEndVolume(elapsedSec, teaserEnd, 1);
       if (Math.abs(a1.currentTime - t) > 0.35) a1.currentTime = Math.max(0, t);
       if (shouldPlay && a1.paused && !a1.ended) void a1.play().catch(() => {});
@@ -1082,8 +1499,8 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
     const a2 = music2Ref.current;
     if (!a2) return;
 
-    const music1End = MUSIC1_SECTION_MS / 1000;
-    const middleEnd = MUSIC2_START_MS / 1000;
+    const music1End = MUSIC1_SECTION_WALL_MS / 1000;
+    const middleEnd = MUSIC2_START_WALL_MS / 1000;
     const music2End = (TOTAL_TEASER_MS - MORVO_FINAL_MS) / 1000;
 
     if (elapsedSec < music1End && !a1.ended) {
@@ -1091,7 +1508,7 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
       a2.volume = 0;
       if (a2.currentTime > 0.05) a2.currentTime = 0;
       a1.volume = teaserEndVolume(elapsedSec, teaserEnd, 1);
-      const t1 = Math.min(elapsedSec, Math.max(0, music1End - 0.05));
+      const t1 = Math.min(contentSec + audioTrim, audioTrim + Math.max(0, MUSIC1_SECTION_MS / 1000 - 0.05));
       if (Math.abs(a1.currentTime - t1) > 0.3) a1.currentTime = t1;
       if (shouldPlay && a1.paused) void a1.play().catch(() => {});
       if (!shouldPlay) a1.pause();
@@ -1130,7 +1547,7 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
       stopSynth();
 
       const middleDur = SYNTH_MIDDLE_MS / 1000;
-      const middleStartWall = MUSIC1_SECTION_MS / 1000;
+      const middleStartWall = MUSIC1_SECTION_WALL_MS / 1000;
       const middleEndWall = middleStartWall + middleDur;
       if (elapsedWallSec >= middleEndWall) return;
 
@@ -1314,6 +1731,17 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
       onClick={() => {
         if (hasStarted && playing) pause();
       }}
+      onMouseEnter={revealControls}
+      onMouseMove={() => {
+        if (!hasStarted) return;
+        revealControls();
+        if (playing) scheduleHideControls(1000);
+      }}
+      onMouseLeave={() => {
+        if (!hasStarted) return;
+        if (playing) scheduleHideControls(200);
+        else setControlsVisible(false);
+      }}
       style={{
         position: "relative",
         width: "100%",
@@ -1353,105 +1781,135 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
             alignItems: "center",
             justifyContent: "center",
             gap: 12,
-            background: BLACK,
+            backgroundColor: BLACK,
+            backgroundImage: `url("${TEASER_COVER_BG}")`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
             zIndex: 5,
+            containerType: "size",
+            overflow: "hidden",
           }}
         >
+          <TeaserCoverBackdrop />
+          <TeaserPresentaTitle font={font} isFullscreen={isFullscreen} />
           <div
             style={{
               position: "absolute",
               inset: 0,
+              zIndex: 3,
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              padding: "clamp(16px, 5vw, 48px)",
+              gap: 12,
               pointerEvents: "none",
             }}
           >
-            <p
+            <button
+              type="button"
+              onClick={play}
+              disabled={!imagesReady || !audioReady}
+              aria-label="Reproducir teaser"
               style={{
-                margin: 0,
-                maxWidth: "min(92%, 720px)",
-                fontFamily: font,
-                fontSize: "clamp(16px, 2.8vw, 28px)",
-                fontWeight: 500,
-                letterSpacing: "0.06em",
-                lineHeight: 1.45,
-                color: "rgba(255,255,255,0.4)",
-                textAlign: "center",
+                pointerEvents: "auto",
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                border: `2px solid ${accentColor}`,
+                background: "rgba(0,0,0,0.45)",
+                cursor: imagesReady && audioReady ? "pointer" : "wait",
+                opacity: imagesReady && audioReady ? 1 : 0.55,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              {TYPEWRITER_TEXT}
-            </p>
+              <div
+                style={{
+                  width: 0,
+                  height: 0,
+                  borderLeft: `22px solid ${accentColor}`,
+                  borderTop: "14px solid transparent",
+                  borderBottom: "14px solid transparent",
+                  marginLeft: 6,
+                }}
+              />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={play}
-            disabled={!imagesReady || !audioReady}
-            aria-label="Reproducir teaser"
+          <TeaserFullscreenButton
+            accentColor={accentColor}
+            isFullscreen={isFullscreen}
+            onToggle={toggleFullscreen}
             style={{
-              position: "relative",
-              zIndex: 2,
-              width: 64,
-              height: 64,
-              borderRadius: "50%",
-              border: `2px solid ${accentColor}`,
-              background: "rgba(0,0,0,0.45)",
-              cursor: imagesReady && audioReady ? "pointer" : "wait",
-              opacity: imagesReady && audioReady ? 1 : 0.55,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              position: "absolute",
+              right: 10,
+              bottom: 10,
+              zIndex: 6,
             }}
-          >
-            <div
-              style={{
-                width: 0,
-                height: 0,
-                borderLeft: `22px solid ${accentColor}`,
-                borderTop: "14px solid transparent",
-                borderBottom: "14px solid transparent",
-                marginLeft: 6,
-              }}
-            />
-          </button>
-          <div
-            style={{
-              position: "relative",
-              zIndex: 2,
-              fontFamily: font,
-              fontSize: 13,
-              letterSpacing: "0.2em",
-              color: accentColor,
-              opacity: 0.9,
-            }}
-          >
-            {!imagesReady
-              ? "CARGANDO IMÁGENES…"
-              : !audioReady
-                ? "CARGANDO AUDIO…"
-                : "REPRODUCIR TEASER"}
-          </div>
+          />
         </div>
       )}
 
       {hasStarted && frame && (
-        <div style={{ position: "absolute", inset: 0, background: frame.bg ?? BLACK }}>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: frame.bg ?? BLACK,
+            overflow: "hidden",
+            containerType: "size",
+          }}
+        >
+          {frame.presenta && coverPhraseFadeT < 1 && (
+            <div style={{ ...crossfadeGpuLayerStyle, opacity: 1 - coverPhraseFadeT }}>
+              <TeaserMontageSurface src={TEASER_COVER_BG} fit="cover" />
+            </div>
+          )}
+          {frame.presenta && coverPhraseFadeT > 0 && (
+            <div style={{ ...crossfadeGpuLayerStyle, opacity: coverPhraseFadeT }}>
+              <TeaserMontageSurface src={TEASER_TYPEWRITER_BG} fit="cover" />
+            </div>
+          )}
           {frame.typewriter && (
-            <TeaserVerticalGrowText
-              font={font}
-              accentColor={accentColor}
-              localMs={frameLocalMs}
-              text={TYPEWRITER_TEXT}
-              pacing="progressive"
-              uppercase
-              revealMs={INTRO_REVEAL_MS}
-            />
+            <TeaserMontageSurface src={TEASER_TYPEWRITER_BG} fit="cover" />
+          )}
+          {frame.bgImg && !frame.typewriter && !frame.presenta && frame.layered && (
+            <TeaserLayeredMontage backSrc={layeredBackSrc} frontSrc={frame.bgImg} />
+          )}
+          {frame.bgImg && !frame.typewriter && !frame.presenta && !frame.layered && (
+            <TeaserMontageSurface src={frame.bgImg} fit={frame.fit ?? "cover"} />
+          )}
+          {frame.typewriter && introPhraseOpacity(elapsedMs) > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 2,
+                opacity: introPhraseOpacity(elapsedMs),
+                pointerEvents: "none",
+              }}
+            >
+              <TeaserVerticalGrowText
+                font={font}
+                accentColor={TYPEWRITER_ACCENT_COLOR}
+                textColor={TYPEWRITER_TEXT_COLOR}
+                scrim
+                scrimOpacity={0.38 * introPhraseOpacity(elapsedMs)}
+                localMs={introPhraseLocalMs(elapsedMs)}
+                text={TYPEWRITER_TEXT}
+                pacing="progressive"
+                uppercase
+                revealMs={INTRO_REVEAL_MS}
+              />
+            </div>
           )}
           {frame.overlayText && (
             <TeaserVerticalGrowText
               font={font}
-              accentColor={accentColor}
+              accentColor={TYPEWRITER_ACCENT_COLOR}
+              textColor={TYPEWRITER_TEXT_COLOR}
+              scrim
               localMs={frameLocalMs}
               text={frame.overlayText}
               pacing="burst"
@@ -1459,10 +1917,20 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
               revealMs={OVERLAY_REVEAL_MS}
             />
           )}
-          {frame.bgImg && (
-            <TeaserMontageSurface src={frame.bgImg} fit={frame.fit ?? "cover"} layered={frame.layered} />
+          {!frame.typewriter && !frame.overlayText && !frame.presenta && <TeaserFilmGrain />}
+          {coverPresentaOpacity(elapsedMs) > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 3,
+                opacity: coverPresentaOpacity(elapsedMs),
+                pointerEvents: "none",
+              }}
+            >
+              <TeaserPresentaTitle font={font} isFullscreen={isFullscreen} />
+            </div>
           )}
-          {!frame.typewriter && !frame.overlayText && <TeaserFilmGrain />}
           {frame.morvo && <FinalMorvoTitle font={font} />}
         </div>
       )}
@@ -1474,6 +1942,7 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
           totalMs={totalMs}
           accentColor={accentColor}
           isFullscreen={isFullscreen}
+          visible={controlsVisible}
           onPlay={play}
           onPause={pause}
           onSeek={seek}
@@ -1504,8 +1973,24 @@ function MorvoFlickerLetter({
   delay: number;
 }) {
   return (
+    <MorvoFlickerText delay={delay} style={{ display: "inline-block" }}>
+      {letter}
+    </MorvoFlickerText>
+  );
+}
+
+function MorvoFlickerText({
+  children,
+  delay = 0,
+  style,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  style?: CSSProperties;
+}) {
+  return (
     <motion.span
-      style={{ display: "inline-block", color: RED }}
+      style={{ color: RED, ...style }}
       animate={{
         opacity: [1, 0.1, 1, 0.35, 1, 0.06, 1, 0.55, 1],
         textShadow: [
@@ -1522,43 +2007,415 @@ function MorvoFlickerLetter({
       }}
       transition={morvoFlickerTransition(delay)}
     >
-      {letter}
+      {children}
     </motion.span>
   );
 }
 
-function FinalMorvoTitle({ font }: { font: string }) {
+const morvoSubtitleFlickerTransition = (delay: number) => ({
+  duration: 3.6,
+  repeat: Infinity,
+  ease: "easeInOut" as const,
+  delay,
+  repeatDelay: 0.35,
+});
+
+const SUBTITLE_GOLD = "#FFD36A";
+const SUBTITLE_GOLD_BRIGHT = "#FFF0B0";
+
+function MorvoSubtitleFlicker({
+  children,
+  delay = 0,
+  style,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  style?: CSSProperties;
+}) {
+  return (
+    <motion.span
+      style={{ color: RED, display: "inline-block", ...style }}
+      animate={{
+        opacity: [0.94, 1, 0.96, 1, 0.95, 1],
+        textShadow: [
+          `0 0 10px ${RED}99, 0 0 20px ${SUBTITLE_GOLD}33`,
+          `0 0 16px ${RED}cc, 0 0 32px ${SUBTITLE_GOLD}aa, 0 0 56px ${SUBTITLE_GOLD_BRIGHT}66`,
+          `0 0 8px ${RED}88, 0 0 18px ${SUBTITLE_GOLD}44`,
+          `0 0 22px ${SUBTITLE_GOLD}ee, 0 0 44px ${SUBTITLE_GOLD}bb, 0 0 72px ${SUBTITLE_GOLD_BRIGHT}88, 0 0 6px ${RED}bb`,
+          `0 0 12px ${RED}aa, 0 0 26px ${SUBTITLE_GOLD}77`,
+          `0 0 18px ${RED}bb, 0 0 36px ${SUBTITLE_GOLD}99, 0 0 60px ${SUBTITLE_GOLD_BRIGHT}55`,
+        ],
+      }}
+      transition={morvoSubtitleFlickerTransition(delay)}
+    >
+      {children}
+    </motion.span>
+  );
+}
+
+function TeaserPresentaTitle({ font, isFullscreen }: { font: string; isFullscreen: boolean }) {
+  const isMobile = useIsMobile();
+  const mobileFullscreen = isMobile && isFullscreen;
+  const textGlow = `0 0 16px ${RED}cc, 0 0 32px ${RED}55, 0 2px 10px rgba(0,0,0,0.5)`;
+  const sidePad = "clamp(10px, 4cqw, 32px)";
+  const baseTop = "clamp(24px, 8cqh, 56px)";
+  const baseBottom = "clamp(24px, 8cqh, 56px)";
+
+  const top = mobileFullscreen
+    ? `calc(${baseTop} + 10px)`
+    : isMobile
+      ? baseTop
+      : `calc(${baseTop} + 20px)`;
+  const bottom = isMobile ? baseBottom : `calc(${baseBottom} + 10px)`;
+
+  const topTextStyle: CSSProperties = {
+    position: "absolute",
+    top,
+    left: sidePad,
+    right: sidePad,
+    margin: 0,
+    fontFamily: font,
+    fontSize: "clamp(9px, min(4.2cqw, 5.5cqh), 28px)",
+    fontWeight: 700,
+    letterSpacing: "clamp(0.04em, 0.65cqw, 0.12em)",
+    lineHeight: 1.3,
+    textAlign: "center",
+    textTransform: "uppercase",
+    color: RED,
+    textShadow: textGlow,
+    maxWidth: "100%",
+    boxSizing: "border-box",
+  };
+
   return (
     <div
       style={{
         position: "absolute",
         inset: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: BLACK,
         zIndex: 2,
+        containerType: "size",
+        pointerEvents: "none",
       }}
     >
-      <span
+      <div
+        aria-hidden
         style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(0,0,0,0.22)",
+        }}
+      />
+      {mobileFullscreen ? (
+        <p style={topTextStyle}>
+          <span style={{ display: "block" }}>Compañía</span>
+          <span style={{ display: "block" }}>OBSCENA TEATRAL</span>
+        </p>
+      ) : (
+        <p style={topTextStyle}>{TEASER_COVER_LINE_TOP}</p>
+      )}
+      <p
+        style={{
+          position: "absolute",
+          bottom,
+          left: sidePad,
+          right: sidePad,
+          margin: 0,
           fontFamily: font,
-          fontSize: "clamp(36px, 7vw, 80px)",
+          fontSize: "clamp(14px, min(7cqw, 10cqh), 44px)",
           fontWeight: 700,
-          letterSpacing: "0.14em",
-          display: "inline-flex",
-          alignItems: "baseline",
-          whiteSpace: "nowrap",
+          letterSpacing: "clamp(0.08em, 1.4cqw, 0.18em)",
+          lineHeight: 1.1,
+          textAlign: "center",
+          textTransform: "uppercase",
+          color: RED,
+          textShadow: textGlow,
+          maxWidth: "100%",
+          boxSizing: "border-box",
         }}
       >
-        {MORVO_LETTERS.map((ch, i) => (
-          <MorvoFlickerLetter
-            key={`${ch}-${i}`}
-            letter={ch}
-            delay={MORVO_FLICKER_DELAYS[i]}
-          />
-        ))}
-      </span>
+        {TEASER_COVER_LINE_BOTTOM}
+      </p>
+    </div>
+  );
+}
+
+const CAST_GOLD = "#FFD89A";
+const CAST_GOLD_BRIGHT = "#FFF4C8";
+
+const castRowFlickerTransition = (delay: number) => ({
+  duration: 3.4,
+  repeat: Infinity,
+  ease: "easeInOut" as const,
+  delay,
+  repeatDelay: 0.2,
+});
+
+const CAST_ROW_OPACITY = [0.86, 1, 0.9, 1, 0.88, 1] as const;
+
+function CastCreditColumn({
+  character,
+  actor,
+  font,
+  delay,
+  isMobile,
+}: {
+  character: string;
+  actor: string;
+  font: string;
+  delay: number;
+  isMobile: boolean;
+}) {
+  const rowTransition = castRowFlickerTransition(delay);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 18, scale: 0.94, filter: "blur(5px)" }}
+      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      transition={{ duration: 0.9, delay: delay - 0.35, ease: [0.16, 1, 0.3, 1] }}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "flex-end",
+        gap: "clamp(2px, 0.45cqh, 5px)",
+        textAlign: "center",
+        minWidth: 0,
+      }}
+    >
+      <motion.div
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "inherit", width: "100%" }}
+        animate={{ opacity: [...CAST_ROW_OPACITY] }}
+        transition={rowTransition}
+      >
+        <motion.span
+          style={{
+            fontFamily: font,
+            fontSize: isMobile
+              ? "clamp(7px, min(3.5cqw, 5cqh), 14px)"
+              : "clamp(8px, min(3.6cqw, 5.2cqh), 17px)",
+            fontWeight: 600,
+            letterSpacing: "0.03em",
+            color: RED,
+            lineHeight: 1.15,
+          }}
+          animate={{
+            textShadow: [
+              `0 0 8px ${RED}66`,
+              `0 0 16px ${RED}cc, 0 0 28px ${SUBTITLE_GOLD}55`,
+              `0 0 6px ${RED}55`,
+              `0 0 14px ${RED}bb, 0 0 24px ${SUBTITLE_GOLD}44`,
+              `0 0 8px ${RED}77`,
+              `0 0 12px ${RED}aa, 0 0 20px ${SUBTITLE_GOLD}33`,
+            ],
+          }}
+          transition={rowTransition}
+        >
+          {character}
+        </motion.span>
+        <motion.span
+          aria-hidden
+          style={{
+            fontFamily: font,
+            fontSize: "clamp(4px, min(1.2cqw, 1.8cqh), 8px)",
+            lineHeight: 1,
+            letterSpacing: "0.08em",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 1,
+          }}
+          animate={{
+            color: [
+              "rgba(255,215,130,0.35)",
+              "rgba(255,230,160,0.85)",
+              "rgba(255,215,130,0.4)",
+              "rgba(255,240,190,0.9)",
+              "rgba(255,215,130,0.38)",
+              "rgba(255,225,150,0.75)",
+            ],
+          }}
+          transition={rowTransition}
+        >
+          <span>·</span>
+          <span>·</span>
+          <span>·</span>
+        </motion.span>
+        <motion.span
+          style={{
+            fontFamily: font,
+            fontSize: isMobile
+              ? "clamp(6px, min(2.8cqw, 4cqh), 11px)"
+              : "clamp(7px, min(3.2cqw, 4.6cqh), 15px)",
+            fontWeight: 500,
+            letterSpacing: isMobile ? "0.05em" : "0.08em",
+            textTransform: "uppercase",
+            lineHeight: 1.2,
+            maxWidth: "100%",
+            wordBreak: "break-word",
+          }}
+          animate={{
+            color: [
+              "rgba(255,216,154,0.82)",
+              CAST_GOLD_BRIGHT,
+              "rgba(255,216,154,0.86)",
+              CAST_GOLD,
+              "rgba(255,216,154,0.8)",
+              "rgba(255,244,200,0.95)",
+            ],
+            textShadow: [
+              `0 0 6px ${CAST_GOLD}33`,
+              `0 0 14px ${CAST_GOLD}aa, 0 0 26px ${SUBTITLE_GOLD}66`,
+              `0 0 4px ${CAST_GOLD}22`,
+              `0 0 12px ${CAST_GOLD}99, 0 0 22px ${SUBTITLE_GOLD}55`,
+              `0 0 5px ${CAST_GOLD}28`,
+              `0 0 10px ${CAST_GOLD}77`,
+            ],
+          }}
+          transition={rowTransition}
+        >
+          {actor}
+        </motion.span>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function FinalMorvoCastCredits({ font }: { font: string }) {
+  const isMobile = useIsMobile();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5, delay: 0.35, ease: "easeOut" }}
+      style={{
+        display: "grid",
+        gridTemplateColumns: isMobile ? "repeat(3, minmax(0, 1fr))" : "repeat(3, minmax(0, 1fr))",
+        gap: isMobile ? "clamp(2px, 1.2cqw, 6px)" : "clamp(8px, 3.2cqw, 22px)",
+        width: isMobile ? "min(92%, 260px)" : "min(78%, 460px)",
+        marginLeft: isMobile ? 0 : 12,
+        alignItems: "end",
+        paddingBottom: isMobile ? "clamp(2px, 0.8cqh, 6px)" : 0,
+      }}
+    >
+      {TEASER_CAST.map(({ character, actor }, i) => (
+        <CastCreditColumn
+          key={character}
+          character={character}
+          actor={actor}
+          font={font}
+          delay={0.55 + i * 0.48}
+          isMobile={isMobile}
+        />
+      ))}
+    </motion.div>
+  );
+}
+
+function FinalMorvoTitle({ font }: { font: string }) {
+  const isMobile = useIsMobile();
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        zIndex: 2,
+        containerType: "size",
+        padding: "0 clamp(10px, 4cqw, 28px)",
+        boxSizing: "border-box",
+      }}
+    >
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(0,0,0,0.18)",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            display: "inline-flex",
+            flexDirection: "column",
+            alignItems: "stretch",
+            gap: isMobile ? "clamp(4px, 1cqh, 8px)" : "clamp(8px, 1.8cqh, 16px)",
+            maxWidth: "100%",
+            transform: isMobile
+              ? "translateY(clamp(-28px, -10cqh, -56px))"
+              : "translateY(clamp(-8px, -2.5cqh, -18px))",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: font,
+              fontSize: isMobile
+                ? "clamp(14px, min(13cqw, 18cqh), 56px)"
+                : "clamp(16px, min(15cqw, 22cqh), 80px)",
+              fontWeight: 700,
+              letterSpacing: "clamp(0.04em, 1.2cqw, 0.12em)",
+              display: "inline-flex",
+              alignItems: "baseline",
+              justifyContent: "center",
+              alignSelf: "center",
+              whiteSpace: "nowrap",
+              maxWidth: "100%",
+            }}
+          >
+            {MORVO_LETTERS.map((ch, i) => (
+              <MorvoFlickerLetter
+                key={`${ch}-${i}`}
+                letter={ch}
+                delay={MORVO_FLICKER_DELAYS[i]}
+              />
+            ))}
+          </span>
+          <MorvoSubtitleFlicker
+            delay={0.8}
+            style={{
+              fontFamily: font,
+              fontSize: isMobile
+                ? "clamp(6px, min(2.2cqw, 3.2cqh), 11px)"
+                : "clamp(7px, min(2.6cqw, 4cqh), 15px)",
+              fontWeight: 500,
+              letterSpacing: isMobile ? "0.05em" : "0.06em",
+              textAlign: isMobile ? "center" : "right",
+              textTransform: "uppercase",
+              alignSelf: isMobile ? "center" : "flex-end",
+              whiteSpace: "nowrap",
+              maxWidth: "100%",
+              lineHeight: 1.2,
+              paddingRight: isMobile ? 0 : "0.04em",
+            }}
+          >
+            de Naz Montés
+          </MorvoSubtitleFlicker>
+        </div>
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          left: "clamp(10px, 4cqw, 28px)",
+          right: "clamp(10px, 4cqw, 28px)",
+          bottom: isMobile ? "clamp(2%, 4cqh, 6%)" : "clamp(10%, 13cqh, 17%)",
+          zIndex: 1,
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <FinalMorvoCastCredits font={font} />
+      </div>
     </div>
   );
 }
