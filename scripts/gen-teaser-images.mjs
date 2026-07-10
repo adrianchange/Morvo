@@ -10,6 +10,11 @@ const EXCLUDE_FILES = new Set([
   "chris-yang-wHnvP5M95OE-unsplash.jpg",
   "annie-spratt-EoP0hx9bybY-unsplash.jpg",
   "nationaal-archief-Nifnvokdv_o-unsplash.jpg",
+  "marcel-strauss-ZdXV79EGHFY-unsplash.jpg",
+  "klara-kulikova-VfkC3fDfeHs-unsplash.jpg",
+  "klara-kulikova-VfkC3fDfeHs-unsplash-kiss.jpg",
+  "don-starkey-BKYK-qSKnpk-unsplash.jpg",
+  "gryffyn-m-pl5B-k_Xk8Y-unsplash.jpg",
 ]);
 const files = fs
   .readdirSync(dir)

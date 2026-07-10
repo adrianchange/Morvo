@@ -1,14 +1,14 @@
 /**
- * Duraciones por foto del tramo familia, alineadas a beats del audio activo
- * (`teaser-grabacion-14-06-2026.m4a`, ventana audio 9,6 s → 35,2 s, trim +4 s).
- * 35 fotos (25 base + 10 inserts).
+ * Duraciones por foto del tramo familia, alineadas al audio activo
+ * (`teaser-bach.m4a`, ventana 10,6 s → 30,0 s, ~94 BPM).
+ * 37 fotos — generado con `node scripts/gen-familia-beat-cuts.mjs`.
  */
 export const TEASER_FAMILIA_BEAT_CUTS_MS: readonly number[] = [
-  477, 511, 1045, 372, 998, 1045, 511, 1045, 534, 1022, 859, 511, 1022, 1068, 511, 1022, 441, 929,
-  1045, 534, 1045, 488, 1045, 1022, 534, 1022, 1045, 511, 1022, 534, 1045, 1022, 511, 1022, 1045, 389,
+  420, 620, 640, 320, 620, 640, 260, 680, 560, 420, 640, 340, 640, 680, 340, 560, 640, 320, 640,
+  640, 320, 620, 600, 400, 640, 320, 640, 580, 340, 680, 580, 380, 640, 320, 640, 660, 420,
 ];
 
-export const TEASER_FAMILIA_USE_BEAT_SYNC = false;
+export const TEASER_FAMILIA_USE_BEAT_SYNC = true;
 
 export function teaserFamiliaMontageMs(photoCount: number): number {
   if (!TEASER_FAMILIA_USE_BEAT_SYNC || TEASER_FAMILIA_BEAT_CUTS_MS.length < photoCount) {

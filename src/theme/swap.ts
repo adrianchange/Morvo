@@ -35,13 +35,18 @@ export const GREEN_ESMERALDA = "#186B52";
 
 export const GREEN_ESMERALDA_LIGHT = "#B8E6D4";
 
+/** Salmón esmeralda — portada y texto del dossier */
+export const ESMERALDA_SALMON = "#FA8072";
 
+/** Mint arcos Paris Bilal — fondo Raíz Esmeralda (muestreado de portada) */
+export const GREEN_ESMERALDA_MINT = "#C8E0D0";
+
+/** Sombras / verde más profundo en la misma imagen */
+export const GREEN_ESMERALDA_MINT_DARK = "#90C8A0";
 
 export const GREEN_PINO = "#1E3A2C";
 
 export const GREEN_PINO_LIGHT = "#D4E0D0";
-
-
 
 export const GREEN_HELECHO = "#3A5A42";
 
@@ -71,6 +76,9 @@ export const RAIZ_TEXT_LIGHT = "#C4A892";
 
 /** Forest green terroso — bosque caducifolio (referencia Figma) */
 export const GREEN_FOREST_TERROSO = "#2E6F40";
+
+/** Forest terroso negro — verde del pasillo Mainak Bose (resto del dossier) */
+export const GREEN_FOREST_TERROSO_NEGRO = "#365935";
 
 /** Cobre hoja otoñal — letras sobre verde bosque */
 export const COPPER_AUTUMN_LEAF = "#C67B4E";

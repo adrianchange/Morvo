@@ -21,6 +21,9 @@ import {
   GREEN_ESMERALDA,
 
   GREEN_ESMERALDA_LIGHT,
+  GREEN_ESMERALDA_MINT,
+  GREEN_ESMERALDA_MINT_DARK,
+  ESMERALDA_SALMON,
 
   GREEN_NIEBLA,
 
@@ -37,6 +40,7 @@ import {
   COPPER_AUTUMN_LEAF,
 
   GREEN_FOREST_TERROSO,
+  GREEN_FOREST_TERROSO_NEGRO,
 
   GREEN_RAIZ_BOSQUE,
 
@@ -360,14 +364,14 @@ export const PALETTES: Record<PaletteId, PaletteTheme> = {
     id: "raiz_esmeralda",
     label: "Raíz Esmeralda",
     greenLabel: "esmeralda",
-    greenDark: GREEN_PINO,
-    greenLight: GREEN_PINO_LIGHT,
-    accent: "#FA8072",
-    line: "#FA8072",
-    bg: GREEN_PINO,
-    text: "#FA8072",
-    titleLetters: "#FA8072",
-    titleV: GREEN_PINO,
+    greenDark: GREEN_ESMERALDA_MINT_DARK,
+    greenLight: ESMERALDA_SALMON,
+    accent: ESMERALDA_SALMON,
+    line: ESMERALDA_SALMON,
+    bg: GREEN_ESMERALDA_MINT,
+    text: ESMERALDA_SALMON,
+    titleLetters: ESMERALDA_SALMON,
+    titleV: GREEN_ESMERALDA_MINT_DARK,
   },
   raiz_forest: {
     id: "raiz_forest",
@@ -386,14 +390,14 @@ export const PALETTES: Record<PaletteId, PaletteTheme> = {
     id: "raiz_black",
     label: "Raíz Black",
     greenLabel: "forest",
-    greenDark: GREEN_FOREST_TERROSO,
+    greenDark: GREEN_FOREST_TERROSO_NEGRO,
     greenLight: NIEBLA_BLACK,
     accent: NIEBLA_BLACK,
     line: NIEBLA_BLACK,
-    bg: GREEN_FOREST_TERROSO,
+    bg: GREEN_FOREST_TERROSO_NEGRO,
     text: NIEBLA_BLACK,
     titleLetters: NIEBLA_BLACK,
-    titleV: GREEN_FOREST_TERROSO,
+    titleV: GREEN_FOREST_TERROSO_NEGRO,
   },
 };
 

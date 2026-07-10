@@ -4,8 +4,29 @@ import {
   TEASER_FAMILIA_URLS,
   buildTeaserRestImages,
 } from "../assets/stockImages";
+import type { PaletteId } from "../theme/palettes";
+import {
+  applyHelechoCrescendoToCuts,
+  applyHelechoDurationBoosts,
+  applyHelechoFamilyMontage,
+  applyHelechoRestMontage,
+  buildHelechoCrescendoCuts,
+  getHelechoTeaserTiming,
+  HELECHO_CRESCENDO_STRENGTH,
+  HELECHO_DURATION_BOOST_FACTOR,
+  HELECHO_FAMILY_CRESCENDO_STRENGTH,
+  HELECHO_FAMILY_DURATION_BOOST_URLS,
+  HELECHO_BALLOONS_TO_MORVO_CROSSFADE_MS,
+  HELECHO_BALLOONS_DURATION_BOOST_FACTOR,
+  HELECHO_BALLOONS_URL,
+  HELECHO_INTRO_TO_FAMILY_CROSSFADE_MS,
+  HELECHO_REST_DURATION_BOOST_URLS,
+  isHelechoBalloonsUrl,
+  TEASER_HELECHO_EXTRA_URLS,
+} from "../assets/teaserHelecho";
 
 import { ACTIVE_TEASER_AUDIO, type TeaserAudioPreset } from "../assets/teaserAudio";
+import { MorvoTeaserTitleHeadline, TEASER_CREDIT_DARK_BLUE } from "./MorvoTeaserTitle";
 import { useIsMobile } from "../hooks/useIsMobile";
 import {
   TEASER_FAMILIA_BEAT_CUTS_MS,
@@ -29,27 +50,41 @@ const SECOND_PHRASE_START_MS = 30_000;
 /** Portada con crédito de producción */
 const TEASER_COVER_MS = 5_000;
 
-const EXTRA_TEASER_IMAGES = [SEQUOIA_IMG, MASK_HORSE_SHOP, MASK_CREEPY, MASK_HORNS, WOLVES_IMG];
-const TEASER_REST_IMAGES = buildTeaserRestImages(EXTRA_TEASER_IMAGES);
+const DEFAULT_EXTRA_TEASER_IMAGES = [SEQUOIA_IMG, MASK_HORSE_SHOP, MASK_CREEPY, MASK_HORNS, WOLVES_IMG];
+/** Helecho: sin foto directora (MASK_HORNS) */
+const HELECHO_EXTRA_TEASER_IMAGES = [SEQUOIA_IMG, MASK_HORSE_SHOP, WOLVES_IMG];
 const FAMILY_MONTAGE_ELENA_MUSHROOM =
   "/images/teaser/nuevas/elena-mozhvilo-hmcF-Lx9jig-unsplash.jpg";
 const FAMILY_MONTAGE_LIANA_HAND = "/images/teaser/nuevas/liana-s-JsXDxr4eI0Y-unsplash.jpg";
+const FAMILY_MONTAGE_FIRST_AFTER_INTRO =
+  "/images/teaser/nuevas/sergey-vinogradov-VjcUuHNidgo-unsplash.jpg";
 
-const ALL_TEASER_IMAGES = [
-  ...TEASER_FAMILIA_URLS,
-  FAMILY_MONTAGE_ELENA_MUSHROOM,
-  FAMILY_MONTAGE_LIANA_HAND,
-  ...TEASER_REST_IMAGES,
-  TEASER_COVER_BG,
-  TEASER_TYPEWRITER_BG,
-  MORVO_FINAL_BG,
-];
+function buildTeaserRestImagesForPalette(paletteId?: PaletteId): string[] {
+  const extra =
+    paletteId === "raiz_helecho" ? HELECHO_EXTRA_TEASER_IMAGES : DEFAULT_EXTRA_TEASER_IMAGES;
+  const base = buildTeaserRestImages(extra);
+  if (paletteId === "raiz_helecho") return applyHelechoRestMontage(base);
+  return base;
+}
+
+function buildAllTeaserImages(paletteId?: PaletteId): string[] {
+  const rest = buildTeaserRestImagesForPalette(paletteId);
+  return [
+    ...TEASER_FAMILIA_URLS,
+    FAMILY_MONTAGE_ELENA_MUSHROOM,
+    FAMILY_MONTAGE_LIANA_HAND,
+    ...rest,
+    TEASER_COVER_BG,
+    TEASER_TYPEWRITER_BG,
+    MORVO_FINAL_BG,
+    ...(paletteId === "raiz_helecho" ? TEASER_HELECHO_EXTRA_URLS : []),
+  ];
+}
 
 const SALMON = "#FA8072";
 const BLACK = "#000000";
 const WHITE = "#FFFFFF";
 const RED = "#CC0000";
-const DARK_RED = "#880000";
 
 const TYPEWRITER_TEXT = "UNA VEZ NOS CONTARON UN CUENTO...";
 const SYNTH_OVERLAY_TEXT = "Hoy te han traído aquí para que lo cambies";
@@ -63,8 +98,10 @@ const SYNTH_FILL_MS = 1_000;
 const SYNTH_MIDDLE_MS = OVERLAY_REVEAL_MS + OVERLAY_HOLD_MS + SYNTH_FILL_MS;
 const OVERLAY_TEXT_MS = OVERLAY_REVEAL_MS + OVERLAY_HOLD_MS;
 const AUDIO_BRIDGE_FADE_MS = 900;
-/** Salta los primeros N s del archivo de audio al reproducir */
-const AUDIO_START_TRIM_MS = 4_000;
+/** Segundo de pared en el que empieza a oírse el audio */
+const AUDIO_WALL_START_MS = 1_000;
+/** Salta los primeros N ms del archivo de audio al reproducir */
+const AUDIO_START_TRIM_MS = 1_000;
 /** Fade de cierre — últimos 3 s del teaser */
 const AUDIO_END_FADE_MS = 3_000;
 /** MORVO + créditos de reparto — cierre del teaser */
@@ -92,10 +129,10 @@ const MUSIC1_SECTION_MS = INTRO_TYPEWRITER_MS + FAMILY_MONTAGE_MS;
 const MUSIC1_SECTION_WALL_MS = TEASER_COVER_MS + MUSIC1_SECTION_MS;
 const MUSIC2_START_WALL_MS = MUSIC1_SECTION_WALL_MS + SYNTH_MIDDLE_MS;
 const MUSIC2_SECTION_MS = REST_MONTAGE_MS;
-const TEASER_COVER_SEC = TEASER_COVER_MS / 1000;
+const AUDIO_WALL_START_SEC = AUDIO_WALL_START_MS / 1000;
 
 function teaserContentSec(elapsedSec: number): number {
-  return Math.max(0, elapsedSec - TEASER_COVER_SEC);
+  return Math.max(0, elapsedSec - AUDIO_WALL_START_SEC);
 }
 
 function teaserEndVolume(elapsedSec: number, teaserEndSec: number, baseVolume: number): number {
@@ -168,6 +205,79 @@ function coverToTypewriterFadeT(elapsedMs: number): number {
   return (elapsedMs - COVER_TO_TYPEWRITER_FADE_START_MS) / COVER_TO_TYPEWRITER_FADE_MS;
 }
 
+function smoothstep(t: number): number {
+  const x = Math.min(1, Math.max(0, t));
+  return x * x * (3 - 2 * x);
+}
+
+function balloonsToMorvoCrossfadeT(
+  frame: Frame | undefined,
+  nextFrame: Frame | undefined,
+  frameLocalMs: number,
+  paletteId?: PaletteId,
+): number {
+  if (paletteId !== "raiz_helecho" || !isHelechoBalloonsUrl(frame?.bgImg) || !nextFrame?.morvo) {
+    return 0;
+  }
+  const fadeMs = HELECHO_BALLOONS_TO_MORVO_CROSSFADE_MS;
+  const start = Math.max(0, (frame?.duration ?? 0) - fadeMs);
+  if (frameLocalMs <= start) return 0;
+  const t = (frameLocalMs - start) / fadeMs;
+  return smoothstep(smoothstep(t));
+}
+
+/** Globos (contain) → créditos (cover): expansión gradual hasta pantalla completa */
+function balloonsToMorvoTransition(t: number): {
+  balloonsOpacity: number;
+  morvoOpacity: number;
+  morvoGrow: number;
+  titleOpacity: number;
+} {
+  if (t <= 0) {
+    return { balloonsOpacity: 1, morvoOpacity: 0, morvoGrow: 0, titleOpacity: 0 };
+  }
+  if (t >= 1) {
+    return { balloonsOpacity: 0, morvoOpacity: 1, morvoGrow: 1, titleOpacity: 1 };
+  }
+
+  const morvoGrow = smoothstep(Math.max(0, (t - 0.06) / 0.94));
+  const morvoOpacity = smoothstep(Math.max(0, (t - 0.1) / 0.9));
+  const balloonsOpacity = 1 - smoothstep(Math.min(1, t * 1.15));
+  const titleOpacity = t <= 0.42 ? 0 : smoothstep((t - 0.42) / 0.58);
+
+  return { balloonsOpacity, morvoOpacity, morvoGrow, titleOpacity };
+}
+
+/** Helecho: entremezcla 1.ª frase → MarioInvertido al final del tramo typewriter */
+function helechoIntroFamilyMixT(elapsedMs: number, paletteId?: PaletteId): number {
+  if (paletteId !== "raiz_helecho") return 0;
+  const fadeMs = HELECHO_INTRO_TO_FAMILY_CROSSFADE_MS;
+  const mixStart = TEASER_COVER_MS + INTRO_TYPEWRITER_MS - fadeMs;
+  const mixEnd = TEASER_COVER_MS + INTRO_TYPEWRITER_MS;
+  if (elapsedMs <= mixStart) return 0;
+  if (elapsedMs >= mixEnd) return 1;
+  return smoothstep((elapsedMs - mixStart) / fadeMs);
+}
+
+/** Texto visible un poco más que el fondo durante la entremezcla */
+function helechoIntroFamilyTextOpacity(mixT: number): number {
+  if (mixT <= 0) return 1;
+  if (mixT >= 1) return 0;
+  return 1 - smoothstep(mixT);
+}
+
+function markHelechoFirstFamilyFrameLayered(frames: Frame[], paletteId?: PaletteId): Frame[] {
+  if (paletteId !== "raiz_helecho" || frames.length === 0) return frames;
+  return frames.map((f, i) => (i === 0 ? { ...f, layered: true } : f));
+}
+
+function firstHelechoFamilyPhotoUrl(frames: Frame[]): string | null {
+  const photo = frames.find(
+    (f) => f.bgImg && !f.typewriter && !f.presenta && !f.overlayText && !f.morvo,
+  );
+  return photo?.bgImg ?? null;
+}
+
 const crossfadeGpuLayerStyle: CSSProperties = {
   position: "absolute",
   inset: 0,
@@ -196,8 +306,17 @@ function introPhraseOpacity(elapsedMs: number): number {
   return (elapsedMs - TEASER_COVER_MS) / INTRO_PHRASE_FADE_IN_MS;
 }
 
+function teaserPhraseFadeOpacity(localMs: number): number {
+  if (localMs >= INTRO_PHRASE_FADE_IN_MS) return 1;
+  return localMs / INTRO_PHRASE_FADE_IN_MS;
+}
+
+function teaserPhraseRevealLocalMs(localMs: number): number {
+  return Math.max(0, localMs - INTRO_PHRASE_DELAY_MS);
+}
+
 function introPhraseLocalMs(elapsedMs: number): number {
-  return Math.max(0, elapsedMs - TEASER_COVER_MS - INTRO_PHRASE_DELAY_MS);
+  return teaserPhraseRevealLocalMs(Math.max(0, elapsedMs - TEASER_COVER_MS));
 }
 
 function familyMontageIndexAtMs(elapsedMs: number, photoCount: number): number {
@@ -277,28 +396,107 @@ function buildFamilyMontageUrls(): string[] {
     }
   }
 
-  return pool;
+  pool = pool.filter((url) => url !== FAMILY_MONTAGE_FIRST_AFTER_INTRO);
+  return [FAMILY_MONTAGE_FIRST_AFTER_INTRO, ...pool];
 }
 
-function buildFamilyMontage(): Frame[] {
-  const pool = buildFamilyMontageUrls();
+function buildFamilyMontage(paletteId?: PaletteId, familyMontageMs = FAMILY_MONTAGE_MS): Frame[] {
+  let pool = buildFamilyMontageUrls();
+  if (paletteId === "raiz_helecho") {
+    pool = applyHelechoFamilyMontage(pool);
+  }
+  const timing = getHelechoTeaserTiming(
+    TEASER_COVER_MS,
+    INTRO_TYPEWRITER_MS,
+    familyMontageMs,
+    OVERLAY_REVEAL_MS,
+    SYNTH_MIDDLE_MS,
+    MORVO_FINAL_MS,
+    TARGET_TOTAL_MS,
+    paletteId,
+  );
+
   if (
     TEASER_FAMILIA_USE_BEAT_SYNC &&
     TEASER_FAMILIA_BEAT_CUTS_MS.length >= pool.length
   ) {
-    return buildTimedMontage(pool, TEASER_FAMILIA_BEAT_CUTS_MS, "contain", false);
+    let cuts = timing.familyCrescendo
+      ? applyHelechoCrescendoToCuts(
+          TEASER_FAMILIA_BEAT_CUTS_MS.slice(0, pool.length),
+          HELECHO_FAMILY_CRESCENDO_STRENGTH,
+        )
+      : [...TEASER_FAMILIA_BEAT_CUTS_MS.slice(0, pool.length)];
+    if (paletteId === "raiz_helecho") {
+      cuts = applyHelechoDurationBoosts(pool, cuts, HELECHO_FAMILY_DURATION_BOOST_URLS);
+    }
+    return markHelechoFirstFamilyFrameLayered(buildTimedMontage(pool, cuts, "contain", false), paletteId);
   }
-  return buildUniqueMontage(pool, FAMILY_MONTAGE_MS, "contain", false);
+
+  const restCuts = timing.familyCrescendo
+    ? buildHelechoCrescendoCuts(pool.length, familyMontageMs, HELECHO_FAMILY_CRESCENDO_STRENGTH)
+    : null;
+  if (restCuts) {
+    const cuts =
+      paletteId === "raiz_helecho"
+        ? applyHelechoDurationBoosts(pool, restCuts, HELECHO_FAMILY_DURATION_BOOST_URLS)
+        : restCuts;
+    return markHelechoFirstFamilyFrameLayered(buildTimedMontage(pool, cuts, "contain", false), paletteId);
+  }
+  return markHelechoFirstFamilyFrameLayered(
+    buildUniqueMontage(pool, familyMontageMs, "contain", false),
+    paletteId,
+  );
 }
 
-function buildTeaserFrames(): Frame[] {
+function buildTeaserFrames(paletteId?: PaletteId): Frame[] {
+  const restImages = buildTeaserRestImagesForPalette(paletteId);
+  const timing = getHelechoTeaserTiming(
+    TEASER_COVER_MS,
+    INTRO_TYPEWRITER_MS,
+    FAMILY_MONTAGE_MS,
+    OVERLAY_REVEAL_MS,
+    SYNTH_MIDDLE_MS,
+    MORVO_FINAL_MS,
+    TARGET_TOTAL_MS,
+    paletteId,
+  );
+
+  let restCuts = timing.restCrescendo
+    ? buildHelechoCrescendoCuts(restImages.length, timing.restMontageMs, HELECHO_CRESCENDO_STRENGTH, 300)
+    : null;
+  if (restCuts && paletteId === "raiz_helecho") {
+    restCuts = applyHelechoDurationBoosts(
+      restImages,
+      restCuts,
+      HELECHO_REST_DURATION_BOOST_URLS,
+      HELECHO_DURATION_BOOST_FACTOR,
+      300,
+    );
+    restCuts = applyHelechoDurationBoosts(
+      restImages,
+      restCuts,
+      [HELECHO_BALLOONS_URL],
+      HELECHO_BALLOONS_DURATION_BOOST_FACTOR,
+      300,
+    );
+  }
+  const restFrames =
+    restCuts && restCuts.length === restImages.length
+      ? buildTimedMontage(restImages, restCuts, "contain", true)
+      : buildUniqueMontage(restImages, timing.restMontageMs, "contain", true);
+
   return [
     { duration: TEASER_COVER_MS, bgImg: TEASER_COVER_BG, fit: "cover", presenta: true },
     { duration: INTRO_TYPEWRITER_MS, bgImg: TEASER_TYPEWRITER_BG, fit: "cover", typewriter: true },
-    ...buildFamilyMontage(),
-    { duration: SYNTH_MIDDLE_MS, bgImg: TEASER_TYPEWRITER_BG, fit: "cover", overlayText: SYNTH_OVERLAY_TEXT },
-    ...buildUniqueMontage(TEASER_REST_IMAGES, REST_MONTAGE_MS, "contain", true),
-    { duration: MORVO_FINAL_MS, bgImg: MORVO_FINAL_BG, fit: "cover", morvo: true },
+    ...buildFamilyMontage(paletteId),
+    {
+      duration: timing.synthMiddleMs,
+      bgImg: TEASER_TYPEWRITER_BG,
+      fit: "cover",
+      overlayText: SYNTH_OVERLAY_TEXT,
+    },
+    ...restFrames,
+    { duration: timing.morvoFinalMs, bgImg: MORVO_FINAL_BG, fit: "cover", morvo: true },
   ];
 }
 
@@ -327,6 +525,7 @@ function formatTime(ms: number): string {
 type TeaserVideoProps = {
   font: string;
   accentColor?: string;
+  paletteId?: PaletteId;
   onEnd?: () => void;
   style?: React.CSSProperties;
 };
@@ -562,7 +761,15 @@ const montageImgBaseStyle: CSSProperties = {
 };
 
 /** 2.ª parte: anterior a cover (canvas) + actual a contain — controlado por el padre */
-function TeaserLayeredMontage({ backSrc, frontSrc }: { backSrc: string | null; frontSrc: string }) {
+function TeaserLayeredMontage({
+  backSrc,
+  frontSrc,
+  frontOpacity = 1,
+}: {
+  backSrc: string | null;
+  frontSrc: string;
+  frontOpacity?: number;
+}) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -630,6 +837,7 @@ function TeaserLayeredMontage({ backSrc, frontSrc }: { backSrc: string | null; f
           pointerEvents: "none",
           userSelect: "none",
           zIndex: 2,
+          opacity: frontOpacity,
         }}
       />
     </div>
@@ -1132,7 +1340,7 @@ function TeaserControls({
   );
 }
 
-export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: TeaserVideoProps) {
+export function TeaserVideo({ font, accentColor = SALMON, paletteId, onEnd, style }: TeaserVideoProps) {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
@@ -1143,12 +1351,21 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
 
   const rootRef = useRef<HTMLDivElement>(null);
   const controlsHideTimerRef = useRef<number | null>(null);
-  const frames = useMemo(() => buildTeaserFrames(), []);
+  const frames = useMemo(() => buildTeaserFrames(paletteId), [paletteId]);
   const totalMs = TOTAL_TEASER_MS;
   const frameIndex = frameIndexAt(elapsedMs, frames);
   const frame = frames[frameIndex];
+  const nextFrame = frames[frameIndex + 1];
   const frameLocalMs = frameLocalElapsedMs(elapsedMs, frameIndex, frames);
   const coverPhraseFadeT = coverToTypewriterFadeT(elapsedMs);
+  const morvoCrossfadeT = balloonsToMorvoCrossfadeT(frame, nextFrame, frameLocalMs, paletteId);
+  const balloonsMorvoTransition = balloonsToMorvoTransition(morvoCrossfadeT);
+  const isBalloonsToMorvo =
+    paletteId === "raiz_helecho" &&
+    isHelechoBalloonsUrl(frame?.bgImg) &&
+    morvoCrossfadeT > 0;
+  const introFamilyMixT = helechoIntroFamilyMixT(elapsedMs, paletteId);
+  const helechoFirstFamilyPhoto = paletteId === "raiz_helecho" ? firstHelechoFamilyPhotoUrl(frames) : null;
   const layeredBackSrc =
     frame?.layered && frame.bgImg && frameIndex > 0 ? (frames[frameIndex - 1]?.bgImg ?? null) : null;
 
@@ -1274,16 +1491,17 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
 
   useEffect(() => {
     let cancelled = false;
+    setImagesReady(false);
     void preloadTeaserCoverImages().then(() => {
       if (cancelled) return;
-      return preloadTeaserImages(ALL_TEASER_IMAGES);
+      return preloadTeaserImages(buildAllTeaserImages(paletteId));
     }).then(() => {
       if (!cancelled) setImagesReady(true);
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [paletteId]);
 
   useEffect(() => {
     const ahead = [frames[frameIndex + 1]?.bgImg, frames[frameIndex + 2]?.bgImg].filter(
@@ -1383,7 +1601,7 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
     const audioTrim = AUDIO_START_TRIM_MS / 1000;
     const contentSec = teaserContentSec(elapsedSec);
 
-    if (elapsedSec < TEASER_COVER_SEC) {
+    if (elapsedSec < AUDIO_WALL_START_SEC) {
       a1.pause();
       a1.volume = 0;
       music2Ref.current?.pause();
@@ -1407,7 +1625,7 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
       }
 
       a1.volume = teaserEndVolume(elapsedSec, teaserEnd, 1);
-      const contentEnd = teaserEnd - TEASER_COVER_SEC;
+      const contentEnd = teaserEnd - AUDIO_WALL_START_SEC;
       const t = Math.min(contentSec + audioTrim, audioTrim + Math.max(0, contentEnd - 0.05));
       if (Math.abs(a1.currentTime - t) > 0.3) a1.currentTime = t;
       if (shouldPlay && a1.paused && !a1.ended) void a1.play().catch(() => {});
@@ -1729,7 +1947,9 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
     <div
       ref={rootRef}
       onClick={() => {
-        if (hasStarted && playing) pause();
+        if (!hasStarted) return;
+        if (playing) pause();
+        else play();
       }}
       onMouseEnter={revealControls}
       onMouseMove={() => {
@@ -1751,7 +1971,7 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
         background: BLACK,
         overflow: "hidden",
         borderRadius: isFullscreen ? 0 : 4,
-        cursor: hasStarted && playing ? "pointer" : undefined,
+        cursor: hasStarted ? "pointer" : undefined,
         ...style,
       }}
     >
@@ -1871,13 +2091,62 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
               <TeaserMontageSurface src={TEASER_TYPEWRITER_BG} fit="cover" />
             </div>
           )}
-          {frame.typewriter && (
+          {frame.typewriter && introFamilyMixT === 0 && (
             <TeaserMontageSurface src={TEASER_TYPEWRITER_BG} fit="cover" />
           )}
-          {frame.bgImg && !frame.typewriter && !frame.presenta && frame.layered && (
+          {frame.typewriter && introFamilyMixT > 0 && helechoFirstFamilyPhoto && (
+            <TeaserLayeredMontage
+              backSrc={TEASER_TYPEWRITER_BG}
+              frontSrc={helechoFirstFamilyPhoto}
+              frontOpacity={introFamilyMixT}
+            />
+          )}
+          {frame.bgImg && !frame.typewriter && !frame.presenta && frame.layered && isBalloonsToMorvo && (
+            <>
+              {balloonsMorvoTransition.balloonsOpacity > 0 && (
+                <div
+                  style={{
+                    ...crossfadeGpuLayerStyle,
+                    opacity: balloonsMorvoTransition.balloonsOpacity,
+                  }}
+                >
+                  <TeaserLayeredMontage backSrc={layeredBackSrc} frontSrc={frame.bgImg} />
+                </div>
+              )}
+              {balloonsMorvoTransition.morvoOpacity > 0 && (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: `${3.5 * (1 - balloonsMorvoTransition.morvoGrow)}%`,
+                    top: `${3.5 * (1 - balloonsMorvoTransition.morvoGrow)}%`,
+                    width: `${93 + 7 * balloonsMorvoTransition.morvoGrow}%`,
+                    height: `${93 + 7 * balloonsMorvoTransition.morvoGrow}%`,
+                    opacity: balloonsMorvoTransition.morvoOpacity,
+                    overflow: "hidden",
+                    willChange: "opacity, width, height, left, top",
+                    WebkitBackfaceVisibility: "hidden",
+                    backfaceVisibility: "hidden",
+                  }}
+                >
+                  <TeaserMontageSurface src={MORVO_FINAL_BG} fit="cover" />
+                </div>
+              )}
+            </>
+          )}
+          {frame.bgImg && !frame.typewriter && !frame.presenta && frame.layered && !isBalloonsToMorvo && (
             <TeaserLayeredMontage backSrc={layeredBackSrc} frontSrc={frame.bgImg} />
           )}
-          {frame.bgImg && !frame.typewriter && !frame.presenta && !frame.layered && (
+          {frame.bgImg && !frame.typewriter && !frame.presenta && !frame.layered && morvoCrossfadeT > 0 && (
+            <>
+              <div style={{ ...crossfadeGpuLayerStyle, opacity: 1 - morvoCrossfadeT }}>
+                <TeaserMontageSurface src={frame.bgImg} fit={frame.fit ?? "cover"} />
+              </div>
+              <div style={{ ...crossfadeGpuLayerStyle, opacity: morvoCrossfadeT }}>
+                <TeaserMontageSurface src={MORVO_FINAL_BG} fit="cover" />
+              </div>
+            </>
+          )}
+          {frame.bgImg && !frame.typewriter && !frame.presenta && !frame.layered && morvoCrossfadeT === 0 && (
             <TeaserMontageSurface src={frame.bgImg} fit={frame.fit ?? "cover"} />
           )}
           {frame.typewriter && introPhraseOpacity(elapsedMs) > 0 && (
@@ -1886,7 +2155,7 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
                 position: "absolute",
                 inset: 0,
                 zIndex: 2,
-                opacity: introPhraseOpacity(elapsedMs),
+                opacity: introPhraseOpacity(elapsedMs) * helechoIntroFamilyTextOpacity(introFamilyMixT),
                 pointerEvents: "none",
               }}
             >
@@ -1895,7 +2164,11 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
                 accentColor={TYPEWRITER_ACCENT_COLOR}
                 textColor={TYPEWRITER_TEXT_COLOR}
                 scrim
-                scrimOpacity={0.38 * introPhraseOpacity(elapsedMs)}
+                scrimOpacity={
+                  0.38 *
+                  introPhraseOpacity(elapsedMs) *
+                  helechoIntroFamilyTextOpacity(introFamilyMixT)
+                }
                 localMs={introPhraseLocalMs(elapsedMs)}
                 text={TYPEWRITER_TEXT}
                 pacing="progressive"
@@ -1904,18 +2177,29 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
               />
             </div>
           )}
-          {frame.overlayText && (
-            <TeaserVerticalGrowText
-              font={font}
-              accentColor={TYPEWRITER_ACCENT_COLOR}
-              textColor={TYPEWRITER_TEXT_COLOR}
-              scrim
-              localMs={frameLocalMs}
-              text={frame.overlayText}
-              pacing="burst"
-              uppercase={false}
-              revealMs={OVERLAY_REVEAL_MS}
-            />
+          {frame.overlayText && teaserPhraseFadeOpacity(frameLocalMs) > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 2,
+                opacity: teaserPhraseFadeOpacity(frameLocalMs),
+                pointerEvents: "none",
+              }}
+            >
+              <TeaserVerticalGrowText
+                font={font}
+                accentColor={TYPEWRITER_ACCENT_COLOR}
+                textColor={TYPEWRITER_TEXT_COLOR}
+                scrim
+                scrimOpacity={0.38 * teaserPhraseFadeOpacity(frameLocalMs)}
+                localMs={teaserPhraseRevealLocalMs(frameLocalMs)}
+                text={frame.overlayText}
+                pacing="progressive"
+                uppercase={false}
+                revealMs={OVERLAY_REVEAL_MS}
+              />
+            </div>
           )}
           {!frame.typewriter && !frame.overlayText && !frame.presenta && <TeaserFilmGrain />}
           {coverPresentaOpacity(elapsedMs) > 0 && (
@@ -1931,7 +2215,19 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
               <TeaserPresentaTitle font={font} isFullscreen={isFullscreen} />
             </div>
           )}
-          {frame.morvo && <FinalMorvoTitle font={font} />}
+          {(frame.morvo || morvoCrossfadeT > 0) && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 4,
+                opacity: frame.morvo ? 1 : balloonsMorvoTransition.titleOpacity,
+                pointerEvents: "none",
+              }}
+            >
+              <FinalMorvoTitle font={font} />
+            </div>
+          )}
         </div>
       )}
 
@@ -1950,106 +2246,6 @@ export function TeaserVideo({ font, accentColor = SALMON, onEnd, style }: Teaser
         />
       )}
     </div>
-  );
-}
-
-const MORVO_LETTERS = ["M", "O", "R", "V", "O"] as const;
-const MORVO_FLICKER_DELAYS = [0, 0.45, 0.9, 0.22, 0.68];
-
-const morvoFlickerTransition = (delay: number) => ({
-  duration: 1.6,
-  repeat: Infinity,
-  ease: "easeInOut" as const,
-  delay,
-  repeatDelay: 0.15,
-  times: [0, 0.08, 0.16, 0.28, 0.38, 0.5, 0.62, 0.76, 0.88, 1],
-});
-
-function MorvoFlickerLetter({
-  letter,
-  delay,
-}: {
-  letter: string;
-  delay: number;
-}) {
-  return (
-    <MorvoFlickerText delay={delay} style={{ display: "inline-block" }}>
-      {letter}
-    </MorvoFlickerText>
-  );
-}
-
-function MorvoFlickerText({
-  children,
-  delay = 0,
-  style,
-}: {
-  children: React.ReactNode;
-  delay?: number;
-  style?: CSSProperties;
-}) {
-  return (
-    <motion.span
-      style={{ color: RED, ...style }}
-      animate={{
-        opacity: [1, 0.1, 1, 0.35, 1, 0.06, 1, 0.55, 1],
-        textShadow: [
-          `0 0 28px ${RED}ee, 0 0 56px ${RED}99`,
-          `0 0 2px ${DARK_RED}33`,
-          `0 0 36px ${RED}ff, 0 0 72px ${RED}aa`,
-          `0 0 4px ${DARK_RED}44`,
-          `0 0 32px ${RED}ee, 0 0 64px ${RED}88`,
-          `0 0 1px ${DARK_RED}22`,
-          `0 0 40px ${RED}ff, 0 0 80px ${RED}bb`,
-          `0 0 6px ${DARK_RED}55`,
-          `0 0 30px ${RED}ee, 0 0 60px ${RED}99`,
-        ],
-      }}
-      transition={morvoFlickerTransition(delay)}
-    >
-      {children}
-    </motion.span>
-  );
-}
-
-const morvoSubtitleFlickerTransition = (delay: number) => ({
-  duration: 3.6,
-  repeat: Infinity,
-  ease: "easeInOut" as const,
-  delay,
-  repeatDelay: 0.35,
-});
-
-const SUBTITLE_GOLD = "#FFD36A";
-const SUBTITLE_GOLD_BRIGHT = "#FFF0B0";
-
-function MorvoSubtitleFlicker({
-  children,
-  delay = 0,
-  style,
-}: {
-  children: React.ReactNode;
-  delay?: number;
-  style?: CSSProperties;
-}) {
-  return (
-    <motion.span
-      style={{ color: RED, display: "inline-block", ...style }}
-      animate={{
-        opacity: [0.94, 1, 0.96, 1, 0.95, 1],
-        textShadow: [
-          `0 0 10px ${RED}99, 0 0 20px ${SUBTITLE_GOLD}33`,
-          `0 0 16px ${RED}cc, 0 0 32px ${SUBTITLE_GOLD}aa, 0 0 56px ${SUBTITLE_GOLD_BRIGHT}66`,
-          `0 0 8px ${RED}88, 0 0 18px ${SUBTITLE_GOLD}44`,
-          `0 0 22px ${SUBTITLE_GOLD}ee, 0 0 44px ${SUBTITLE_GOLD}bb, 0 0 72px ${SUBTITLE_GOLD_BRIGHT}88, 0 0 6px ${RED}bb`,
-          `0 0 12px ${RED}aa, 0 0 26px ${SUBTITLE_GOLD}77`,
-          `0 0 18px ${RED}bb, 0 0 36px ${SUBTITLE_GOLD}99, 0 0 60px ${SUBTITLE_GOLD_BRIGHT}55`,
-        ],
-      }}
-      transition={morvoSubtitleFlickerTransition(delay)}
-    >
-      {children}
-    </motion.span>
   );
 }
 
@@ -2139,8 +2335,8 @@ function TeaserPresentaTitle({ font, isFullscreen }: { font: string; isFullscree
   );
 }
 
-const CAST_GOLD = "#FFD89A";
-const CAST_GOLD_BRIGHT = "#FFF4C8";
+const TEASER_CREDIT_BLUE_MID = "#243D5C";
+const TEASER_CREDIT_BLUE_LIGHT = "#3A5A7A";
 
 const castRowFlickerTransition = (delay: number) => ({
   duration: 3.4,
@@ -2195,17 +2391,17 @@ function CastCreditColumn({
               : "clamp(8px, min(3.6cqw, 5.2cqh), 17px)",
             fontWeight: 600,
             letterSpacing: "0.03em",
-            color: RED,
+            color: TEASER_CREDIT_DARK_BLUE,
             lineHeight: 1.15,
           }}
           animate={{
             textShadow: [
-              `0 0 8px ${RED}66`,
-              `0 0 16px ${RED}cc, 0 0 28px ${SUBTITLE_GOLD}55`,
-              `0 0 6px ${RED}55`,
-              `0 0 14px ${RED}bb, 0 0 24px ${SUBTITLE_GOLD}44`,
-              `0 0 8px ${RED}77`,
-              `0 0 12px ${RED}aa, 0 0 20px ${SUBTITLE_GOLD}33`,
+              `0 0 8px ${TEASER_CREDIT_DARK_BLUE}66`,
+              `0 0 16px ${TEASER_CREDIT_BLUE_MID}cc, 0 0 28px ${TEASER_CREDIT_BLUE_LIGHT}55`,
+              `0 0 6px ${TEASER_CREDIT_DARK_BLUE}55`,
+              `0 0 14px ${TEASER_CREDIT_BLUE_MID}bb, 0 0 24px ${TEASER_CREDIT_BLUE_LIGHT}44`,
+              `0 0 8px ${TEASER_CREDIT_DARK_BLUE}77`,
+              `0 0 12px ${TEASER_CREDIT_BLUE_MID}aa, 0 0 20px ${TEASER_CREDIT_BLUE_LIGHT}33`,
             ],
           }}
           transition={rowTransition}
@@ -2226,12 +2422,12 @@ function CastCreditColumn({
           }}
           animate={{
             color: [
-              "rgba(255,215,130,0.35)",
-              "rgba(255,230,160,0.85)",
-              "rgba(255,215,130,0.4)",
-              "rgba(255,240,190,0.9)",
-              "rgba(255,215,130,0.38)",
-              "rgba(255,225,150,0.75)",
+              `${TEASER_CREDIT_BLUE_MID}59`,
+              `${TEASER_CREDIT_BLUE_LIGHT}d9`,
+              `${TEASER_CREDIT_BLUE_MID}66`,
+              `${TEASER_CREDIT_BLUE_LIGHT}e6`,
+              `${TEASER_CREDIT_BLUE_MID}61`,
+              `${TEASER_CREDIT_BLUE_LIGHT}c4`,
             ],
           }}
           transition={rowTransition}
@@ -2246,29 +2442,30 @@ function CastCreditColumn({
             fontSize: isMobile
               ? "clamp(6px, min(2.8cqw, 4cqh), 11px)"
               : "clamp(7px, min(3.2cqw, 4.6cqh), 15px)",
-            fontWeight: 500,
+            fontWeight: 700,
             letterSpacing: isMobile ? "0.05em" : "0.08em",
             textTransform: "uppercase",
             lineHeight: 1.2,
             maxWidth: "100%",
             wordBreak: "break-word",
+            color: TEASER_CREDIT_DARK_BLUE,
           }}
           animate={{
             color: [
-              "rgba(255,216,154,0.82)",
-              CAST_GOLD_BRIGHT,
-              "rgba(255,216,154,0.86)",
-              CAST_GOLD,
-              "rgba(255,216,154,0.8)",
-              "rgba(255,244,200,0.95)",
+              `${TEASER_CREDIT_DARK_BLUE}d1`,
+              TEASER_CREDIT_BLUE_LIGHT,
+              `${TEASER_CREDIT_DARK_BLUE}db`,
+              TEASER_CREDIT_BLUE_MID,
+              `${TEASER_CREDIT_DARK_BLUE}cc`,
+              `${TEASER_CREDIT_BLUE_LIGHT}f2`,
             ],
             textShadow: [
-              `0 0 6px ${CAST_GOLD}33`,
-              `0 0 14px ${CAST_GOLD}aa, 0 0 26px ${SUBTITLE_GOLD}66`,
-              `0 0 4px ${CAST_GOLD}22`,
-              `0 0 12px ${CAST_GOLD}99, 0 0 22px ${SUBTITLE_GOLD}55`,
-              `0 0 5px ${CAST_GOLD}28`,
-              `0 0 10px ${CAST_GOLD}77`,
+              `0 0 6px ${TEASER_CREDIT_DARK_BLUE}33`,
+              `0 0 14px ${TEASER_CREDIT_BLUE_MID}aa, 0 0 26px ${TEASER_CREDIT_BLUE_LIGHT}66`,
+              `0 0 4px ${TEASER_CREDIT_DARK_BLUE}22`,
+              `0 0 12px ${TEASER_CREDIT_BLUE_MID}99, 0 0 22px ${TEASER_CREDIT_BLUE_LIGHT}55`,
+              `0 0 5px ${TEASER_CREDIT_DARK_BLUE}28`,
+              `0 0 10px ${TEASER_CREDIT_BLUE_MID}77`,
             ],
           }}
           transition={rowTransition}
@@ -2345,63 +2542,7 @@ function FinalMorvoTitle({ font }: { font: string }) {
           justifyContent: "center",
         }}
       >
-        <div
-          style={{
-            display: "inline-flex",
-            flexDirection: "column",
-            alignItems: "stretch",
-            gap: isMobile ? "clamp(4px, 1cqh, 8px)" : "clamp(8px, 1.8cqh, 16px)",
-            maxWidth: "100%",
-            transform: isMobile
-              ? "translateY(clamp(-28px, -10cqh, -56px))"
-              : "translateY(clamp(-8px, -2.5cqh, -18px))",
-          }}
-        >
-          <span
-            style={{
-              fontFamily: font,
-              fontSize: isMobile
-                ? "clamp(14px, min(13cqw, 18cqh), 56px)"
-                : "clamp(16px, min(15cqw, 22cqh), 80px)",
-              fontWeight: 700,
-              letterSpacing: "clamp(0.04em, 1.2cqw, 0.12em)",
-              display: "inline-flex",
-              alignItems: "baseline",
-              justifyContent: "center",
-              alignSelf: "center",
-              whiteSpace: "nowrap",
-              maxWidth: "100%",
-            }}
-          >
-            {MORVO_LETTERS.map((ch, i) => (
-              <MorvoFlickerLetter
-                key={`${ch}-${i}`}
-                letter={ch}
-                delay={MORVO_FLICKER_DELAYS[i]}
-              />
-            ))}
-          </span>
-          <MorvoSubtitleFlicker
-            delay={0.8}
-            style={{
-              fontFamily: font,
-              fontSize: isMobile
-                ? "clamp(6px, min(2.2cqw, 3.2cqh), 11px)"
-                : "clamp(7px, min(2.6cqw, 4cqh), 15px)",
-              fontWeight: 500,
-              letterSpacing: isMobile ? "0.05em" : "0.06em",
-              textAlign: isMobile ? "center" : "right",
-              textTransform: "uppercase",
-              alignSelf: isMobile ? "center" : "flex-end",
-              whiteSpace: "nowrap",
-              maxWidth: "100%",
-              lineHeight: 1.2,
-              paddingRight: isMobile ? 0 : "0.04em",
-            }}
-          >
-            de Naz Montés
-          </MorvoSubtitleFlicker>
-        </div>
+        <MorvoTeaserTitleHeadline font={font} sizeUnit="cq" />
       </div>
       <div
         style={{

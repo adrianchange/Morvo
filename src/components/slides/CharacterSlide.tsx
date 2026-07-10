@@ -1,4 +1,5 @@
 import type { PaletteTheme } from "../../theme/palettes";
+import { getPetroleoPortraitFilter } from "../../assets/petroleoPhotos";
 import { slideText } from "../../theme/palettes";
 import { fontBody, fontDisplay } from "./slideStyles";
 import { SlideShell } from "./shared";
@@ -21,6 +22,8 @@ export type CharacterSlideData = {
   photoLabel: string;
   photoUrl?: string;
   roleLabel?: string;
+  /** Sin foto de fondo (solo texto) */
+  hidePhoto?: boolean;
 };
 
 type Props = {
@@ -31,37 +34,41 @@ type Props = {
 export function CharacterSlide({ theme, data }: Props) {
   const mobile = useIsMobile();
   const text = slideText(theme);
+  const showPhoto = !data.hidePhoto;
   const bgUrl = data.photoUrl ?? nextPicsumUrl();
   const bg = theme.bg;
+  const portraitFilter = getPetroleoPortraitFilter(data.photoUrl);
 
   if (mobile) {
     return (
       <SlideShell theme={theme} index={data.index}>
-        {/* Bottom half: photo */}
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: "55%",
-            backgroundImage: `url(${bgUrl})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-        {/* Gradient blending photo into solid bg */}
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: "55%",
-            background: `linear-gradient(to bottom, ${bg} 0%, ${bg}99 25%, transparent 70%)`,
-          }}
-        />
-        {/* Text on the top */}
+        {showPhoto && (
+          <>
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: "55%",
+                backgroundImage: `url(${bgUrl})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                filter: portraitFilter,
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: "55%",
+                background: `linear-gradient(to bottom, ${bg} 0%, ${bg}99 25%, transparent 70%)`,
+              }}
+            />
+          </>
+        )}
         <div
           style={{
             position: "absolute",
@@ -71,9 +78,10 @@ export function CharacterSlide({ theme, data }: Props) {
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
-            padding: "48px 24px 20px",
+            padding: showPhoto ? "48px 24px 20px" : "48px 24px 40px",
             boxSizing: "border-box",
-            maxHeight: "50%",
+            maxHeight: showPhoto ? "50%" : undefined,
+            bottom: showPhoto ? undefined : 0,
             overflow: "hidden",
             gap: 10,
           }}
@@ -124,31 +132,33 @@ export function CharacterSlide({ theme, data }: Props) {
 
   return (
     <SlideShell theme={theme} index={data.index}>
-      {/* Right half: photo */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: "55%",
-          backgroundImage: `url(${bgUrl})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      />
-      {/* Gradient blending photo into the solid bg color */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: "55%",
-          background: `linear-gradient(to right, ${bg} 0%, ${bg}99 25%, transparent 70%)`,
-        }}
-      />
-      {/* Text on the left */}
+      {showPhoto && (
+        <>
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: "55%",
+              backgroundImage: `url(${bgUrl})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              filter: portraitFilter,
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: "55%",
+              background: `linear-gradient(to right, ${bg} 0%, ${bg}99 25%, transparent 70%)`,
+            }}
+          />
+        </>
+      )}
       <div
         style={{
           position: "absolute",
@@ -158,7 +168,8 @@ export function CharacterSlide({ theme, data }: Props) {
           justifyContent: "center",
           padding: "clamp(48px, 8vh, 72px) clamp(48px, 8vw, 96px) clamp(40px, 6vh, 56px)",
           boxSizing: "border-box",
-          maxWidth: "50%",
+          maxWidth: showPhoto ? "50%" : "min(720px, 88%)",
+          margin: showPhoto ? undefined : "0 auto",
           gap: "clamp(12px, 2vh, 20px)",
         }}
       >

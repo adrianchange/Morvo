@@ -120,7 +120,12 @@ function NavArrow({
 
 export function SlideNav({ theme, onPrev, onNext }: Props) {
   const mobile = useIsMobile();
-  const bottom = mobile && isRaizPremium(theme);
+  const bottom =
+    mobile &&
+    isRaizPremium(theme) &&
+    theme.id !== "raiz_petroleo" &&
+    theme.id !== "raiz_black" &&
+    theme.id !== "raiz_esmeralda";
 
   return (
     <>

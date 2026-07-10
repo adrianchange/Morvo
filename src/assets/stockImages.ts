@@ -86,9 +86,9 @@ const BOSQUE_LOCAL = "/images/teaser/bosque";
 
 export const BOSQUE_FRONDOSO: StockImage[] = [
   {
-    id: "bosque-nataliya-melnychuk",
-    label: "Bosque frondoso — Nataliya Melnychuk",
-    url: localImage(`${BOSQUE_LOCAL}/nataliya-melnychuk-jl-g9VII-hY.jpg`),
+    id: "bosque-luis-villasmil",
+    label: "Bosque frondoso — Luis Villasmil",
+    url: localImage(`${BOSQUE_LOCAL}/luis-villasmil-a0AxJutn5RQ-unsplash.jpg`),
   },
   {
     id: "bosque-marco-grosso",
@@ -111,9 +111,9 @@ export const BOSQUE_FRONDOSO: StockImage[] = [
     url: localImage(`${BOSQUE_LOCAL}/anita-austvika-RfSMtI-KeMo.jpg`),
   },
   {
-    id: "bosque-luise-and-nic",
-    label: "Bosque vertical — Luise and Nic",
-    url: localImage(`${BOSQUE_LOCAL}/luise-and-nic-1RiNgPKW-m4.jpg`),
+    id: "bosque-pascal-debrunner-nvERY",
+    label: "Bosque vertical — Pascal Debrunner",
+    url: localImage(`${BOSQUE_LOCAL}/pascal-debrunner-nvERYppV3SM-unsplash.jpg`),
   },
   {
     id: "bosque-wes-hicks",
@@ -249,7 +249,7 @@ const TEASER_FAMILIA_BASE_URLS: string[] = [
   "/images/teaser/nuevas/rick-lobs-RuOmNZ9iM3I-unsplash.jpg",
   "/images/teaser/nuevas/terren-hurst-mf1Mb9mNCFg-unsplash.jpg",
   "/images/teaser/nuevas/tiago-ferreira-iNOcuqaR-js-unsplash.jpg",
-  "/images/teaser/nuevas/zoshua-colah-4YdPoJFFWAA-unsplash.jpg",
+  "/images/teaser/nuevas/sandy-millar-KhStXRVhfog-unsplash.jpg",
   "/images/teaser/nuevas/zoshua-colah-CUka1SutO5Q-unsplash.jpg",
 ];
 
@@ -262,7 +262,6 @@ const TEASER_FAMILIA_INSERT_URLS: string[] = [
   "/images/teaser/nuevas/anton-pavlov-BCazFs7jWF8-unsplash.jpg",
   "/images/teaser/nuevas/gravity-vStkVmrfTrw-unsplash.jpg",
   "/images/teaser/nuevas/federica-giusti-my6gx6s_Fr8-unsplash.jpg",
-  "/images/teaser/nuevas/sergey-vinogradov-VjcUuHNidgo-unsplash.jpg",
   "/images/teaser/nuevas/jr-korpa-AK7rrIAldDg-unsplash.jpg",
 ];
 
@@ -299,7 +298,6 @@ const TEASER_REST_INSERT_URLS: string[] = [
   "/images/teaser/nuevas/pranav-ck-g1dKoyNCUPU-unsplash.jpg",
   "/images/teaser/nuevas/mikita-karasiou-dSbPtJHukVE-unsplash.jpg",
   "/images/teaser/nuevas/joey-nicotra-jaWsWDzCXSQ-unsplash.jpg",
-  "/images/teaser/nuevas/klara-kulikova-VfkC3fDfeHs-unsplash-kiss.jpg",
   "/images/teaser/nuevas/tommaso-ubezio-4c2aeV4gsGE-unsplash.jpg",
   "/images/teaser/nuevas/manyu-varma-ef3A5EDR7Jk-unsplash.jpg",
   "/images/teaser/nuevas/luka-peters-tD2HNVUtxc8-unsplash.jpg",
@@ -316,6 +314,11 @@ const TEASER_EXCLUDED_URLS = new Set([
   "/images/teaser/nuevas/annie-spratt-EoP0hx9bybY-unsplash.jpg",
   "/images/teaser/nuevas/nationaal-archief-Nifnvokdv_o-unsplash.jpg",
   "/images/teaser/nuevas/wolfgang-hasselmann-qqaxfqr_jss-unsplash.jpg",
+  "/images/teaser/nuevas/marcel-strauss-ZdXV79EGHFY-unsplash.jpg",
+  "/images/teaser/nuevas/klara-kulikova-VfkC3fDfeHs-unsplash.jpg",
+  "/images/teaser/nuevas/klara-kulikova-VfkC3fDfeHs-unsplash-kiss.jpg",
+  "/images/teaser/nuevas/don-starkey-BKYK-qSKnpk-unsplash.jpg",
+  "/images/teaser/nuevas/gryffyn-m-pl5B-k_Xk8Y-unsplash.jpg",
 ]);
 
 /** Imágenes del montaje que no se usan en el primer tramo */

@@ -1,4 +1,5 @@
 import type { PaletteTheme } from "../../theme/palettes";
+import { PETROLEO_PHOTOS } from "../../assets/petroleoPhotos";
 import { isRaizPremium, slideText } from "../../theme/palettes";
 import { fontBody, fontDisplay } from "./slideStyles";
 import { SlideShell } from "./shared";
@@ -74,16 +75,18 @@ function SynopsisContent({ theme, text, mobile }: { theme: PaletteTheme; text: s
 export function SynopsisSlide({ theme }: Props) {
   const text = slideText(theme);
   const mobile = useIsMobile();
+  const isPetroleo = theme.id === "raiz_petroleo";
   if (isRaizPremium(theme)) {
     const bg = theme.bg;
+    const bgImg = isPetroleo ? PETROLEO_PHOTOS.sinopsis : FOREST_IMG;
     return (
       <SlideShell theme={theme} index="03">
-        {/* Forest background image */}
+        {/* Background image */}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage: `url(${FOREST_IMG})`,
+            backgroundImage: `url(${bgImg})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}

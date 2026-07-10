@@ -29,13 +29,13 @@ import {
   HelechoChartreuseCredit,
   NieblaDropCredit,
   ObscenaTeatralHeader,
-  PetroleoCredit,
   PinoDropCredit,
   SelvaDropCredit,
   InvertidaCredit,
   RaizCredit,
   TierraCredit,
 } from "../CoverTitle";
+import { MorvoTeaserTitleHeadline, ESMERALDA_SALMON, ESMERALDA_SALMON_DARK, MORVO_RED } from "../MorvoTeaserTitle";
 
 import { fontBody, fontDisplay, mutedTextStyle } from "./slideStyles";
 import { slideRootStyle } from "./shared";
@@ -43,6 +43,15 @@ import { slideRootStyle } from "./shared";
 
 
 const GRAIN_SVG = `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`;
+
+/** Última imagen del teaser — prueba de fondo en portada Raíz Petróleo */
+const TEASER_FINAL_IMAGE = "/images/teaser/morvo-final-paris-bilal.png";
+
+/** Pasillo verde Mainak Bose — portada Forest terroso negro y frases del teaser */
+const TEASER_MAINAK_BOSE_COVER = "/images/teaser/teaser-cover-mainak-bose.jpg";
+
+/** Arcos mint Paris Bilal — portada Raíz Esmeralda y teaser */
+const TEASER_PARIS_BILAL_COVER = "/images/teaser/teaser-cover-paris-bilal-arches.jpg";
 
 
 
@@ -660,25 +669,64 @@ function HospitalCover({ theme }: CoverSlideProps) {
 /** Portada Raíz: bosque salvaje + crédito óxido, centrado */
 function RaizCover({ theme }: CoverSlideProps) {
   const fg = slideText(theme);
-  const lineGrad = `linear-gradient(90deg, transparent, ${fg} 30%, ${fg} 70%, transparent)`;
 
   const isHelecho = isHelechoStyle(theme);
   const isSelva = isSelvaStyle(theme.id);
   const isPetroleo = theme.id === "raiz_petroleo";
+  const isRaizBlack = theme.id === "raiz_black";
+  const isEsmeralda = theme.id === "raiz_esmeralda";
+  const isMorvoPhotoCover = isPetroleo || isRaizBlack || isEsmeralda;
+  const coverBgImage = isPetroleo
+    ? TEASER_FINAL_IMAGE
+    : isEsmeralda
+      ? TEASER_PARIS_BILAL_COVER
+      : TEASER_MAINAK_BOSE_COVER;
+  const coverAccent = isRaizBlack ? MORVO_RED : isEsmeralda ? ESMERALDA_SALMON : fg;
+  /** Portada esmeralda: velo verde pino (no el mint del resto del dossier) */
+  const coverOverlayBg = isEsmeralda ? GREEN_PINO : theme.bg;
   const isHelechoPalette = theme.id === "raiz_helecho";
   const isNiebla = theme.id === "raiz_niebla";
   const isPino = theme.id === "raiz_pino";
   const useSelvaDropCredit = isSelva || isHelechoPalette;
   const usesEsmeraldaTitleSize = isPetroleo;
   const titleCreditGap =
-    isPino || isNiebla || isPetroleo || useSelvaDropCredit
+    isPino || isNiebla || isMorvoPhotoCover || useSelvaDropCredit
       ? 0
       : "clamp(20px, 3.5vh, 40px)";
+  const lineGrad = `linear-gradient(90deg, transparent, ${isMorvoPhotoCover ? coverAccent : fg} 30%, ${isMorvoPhotoCover ? coverAccent : fg} 70%, transparent)`;
 
   return (
-    <div style={{ ...slideRootStyle(theme), overflow: isHelecho ? "visible" : undefined }}>
+    <div
+      style={{
+        ...slideRootStyle(theme),
+        overflow: isHelecho ? "visible" : undefined,
+        ...(isMorvoPhotoCover ? { background: "transparent" } : {}),
+      }}
+    >
+      {isMorvoPhotoCover && (
+        <>
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: `url(${coverBgImage})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: `${coverOverlayBg}88`,
+            }}
+          />
+        </>
+      )}
       <Grain light />
-      <ObscenaTeatralHeader color={fg} />
+      <ObscenaTeatralHeader color={isMorvoPhotoCover ? coverAccent : fg} />
       <div
         style={{
           position: "absolute",
@@ -741,51 +789,68 @@ function RaizCover({ theme }: CoverSlideProps) {
               justifyContent: "center",
               alignItems: "center",
               width: "100%",
-              fontFamily: fontDisplay(theme),
-              fontSize: usesEsmeraldaTitleSize
-                ? PETROLEO_TITLE_FONT_SIZE
-                : isHelecho
-                  ? isNiebla
-                    ? NIEBLA_TITLE_FONT_SIZE
-                    : HELECHO_TITLE_FONT_SIZE
-                  : ESMERALDA_TITLE_FONT_SIZE,
               userSelect: "none",
               overflow: "visible",
-              ...(isSelva || isHelechoPalette || isPino
+              ...(isMorvoPhotoCover
                 ? { position: "relative", zIndex: 2 }
-                : {}),
-              ...(usesEsmeraldaTitleSize
+                : isSelva || isHelechoPalette || isPino
+                  ? { position: "relative", zIndex: 2 }
+                  : {}),
+              ...(!isMorvoPhotoCover
                 ? {
-                    fontFamily: HELECHO_TITLE_FONT,
-                    fontWeight: 900,
-                    lineHeight: 1,
-                    textTransform: "uppercase" as const,
+                    fontFamily: fontDisplay(theme),
+                    fontSize: usesEsmeraldaTitleSize
+                      ? PETROLEO_TITLE_FONT_SIZE
+                      : isHelecho
+                        ? isNiebla
+                          ? NIEBLA_TITLE_FONT_SIZE
+                          : HELECHO_TITLE_FONT_SIZE
+                        : ESMERALDA_TITLE_FONT_SIZE,
+                    ...(usesEsmeraldaTitleSize
+                      ? {
+                          fontFamily: HELECHO_TITLE_FONT,
+                          fontWeight: 900,
+                          lineHeight: 1,
+                          textTransform: "uppercase" as const,
+                        }
+                      : isHelecho
+                        ? HELECHO_TITLE_STYLE
+                        : { fontWeight: 900, lineHeight: 1 }),
                   }
-                : isHelecho
-                  ? HELECHO_TITLE_STYLE
-                  : { fontWeight: 900, lineHeight: 1 }),
+                : {}),
             }}
           >
-            <CoverTitle palette={theme.id} />
+            {isMorvoPhotoCover ? (
+              <MorvoTeaserTitleHeadline
+                font={fontDisplay(theme)}
+                sizeUnit="vw"
+                creditColor={coverAccent}
+                titleColor={isEsmeralda ? ESMERALDA_SALMON : undefined}
+                titleDarkColor={isEsmeralda ? ESMERALDA_SALMON_DARK : undefined}
+                centerCredit
+                creditDesktopOffsetY={-6}
+              />
+            ) : (
+              <CoverTitle palette={theme.id} />
+            )}
           </motion.div>
-          {theme.id === "raiz_esmeralda" ? (
-            <EsmeraldaSalmonCredit />
-          ) : theme.id === "raiz_pino" ? (
-            <PinoDropCredit color={fg} />
-          ) : isNiebla ? (
-            <NieblaDropCredit color={fg} />
-          ) : useSelvaDropCredit ? (
-            <SelvaDropCredit
-              color={isSelva ? (theme.titleLetters ?? fg) : fg}
-              titleScaleX={isHelechoPalette ? HELECHO_TITLE_SCALE_X : SELVA_TITLE_SCALE_X}
-            />
-          ) : isPetroleo ? (
-            <PetroleoCredit color={fg} />
-          ) : isHelecho ? (
-            <HelechoChartreuseCredit color={fg} />
-          ) : (
-            <RaizCredit greenDark={theme.greenDark} greenLight={theme.greenLight} />
-          )}
+          {!isMorvoPhotoCover &&
+            (theme.id === "raiz_esmeralda" ? (
+              <EsmeraldaSalmonCredit />
+            ) : theme.id === "raiz_pino" ? (
+              <PinoDropCredit color={fg} />
+            ) : isNiebla ? (
+              <NieblaDropCredit color={fg} />
+            ) : useSelvaDropCredit ? (
+              <SelvaDropCredit
+                color={isSelva ? (theme.titleLetters ?? fg) : fg}
+                titleScaleX={isHelechoPalette ? HELECHO_TITLE_SCALE_X : SELVA_TITLE_SCALE_X}
+              />
+            ) : isHelecho ? (
+              <HelechoChartreuseCredit color={fg} />
+            ) : (
+              <RaizCredit greenDark={theme.greenDark} greenLight={theme.greenLight} />
+            ))}
         </div>
       </div>
     </div>

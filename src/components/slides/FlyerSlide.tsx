@@ -1,4 +1,5 @@
 import type { PaletteTheme } from "../../theme/palettes";
+import { PETROLEO_PHOTOS } from "../../assets/petroleoPhotos";
 import { isHelechoStyle, isRaizPremium, slideText } from "../../theme/palettes";
 import { CoverTitle } from "../CoverTitle";
 import { fontDisplay } from "./slideStyles";
@@ -12,20 +13,47 @@ function EsmeraldaFlyer({ theme }: Props) {
   const bg = theme.bg;
   const text = slideText(theme);
   const helechoStyle = isHelechoStyle(theme);
+  const isPetroleoFlyer = theme.id === "raiz_petroleo";
+  const flyerImg = isPetroleoFlyer ? PETROLEO_PHOTOS.portada : FLYER_IMG;
 
   return (
     <SlideShell theme={theme} index="02">
       {/* Background photo */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage: `url(${FLYER_IMG})`,
-          backgroundSize: "contain",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center 50%",
-        }}
-      />
+      {isPetroleoFlyer ? (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: bg,
+          }}
+        >
+          <img
+            src={flyerImg}
+            alt=""
+            draggable={false}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              objectPosition: "center",
+            }}
+          />
+        </div>
+      ) : (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `url(${flyerImg})`,
+            backgroundSize: "contain",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center 50%",
+          }}
+        />
+      )}
       {/* Radial vignette: photo visible in center, fades to bg */}
       <div
         style={{

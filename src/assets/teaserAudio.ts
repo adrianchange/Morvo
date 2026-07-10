@@ -1,7 +1,11 @@
 export type TeaserAudioPresetId =
   | "legacy-dual"
   | "grabacion-2026-06-12"
-  | "grabacion-14-06-2026-full";
+  | "grabacion-14-06-2026-full"
+  | "grabacion-16-06-2026-full"
+  | "ravel"
+  | "siglocatorce"
+  | "bach";
 
 export type TeaserAudioPreset = {
   id: TeaserAudioPresetId;
@@ -37,6 +41,34 @@ export const TEASER_AUDIO_PRESETS: Record<TeaserAudioPresetId, TeaserAudioPreset
     mode: "single-continuous",
     tracks: ["/audio/teaser-grabacion-14-06-2026.m4a"],
   },
+  /** Grabación 16-06 (13:18) recortada a 60 s */
+  "grabacion-16-06-2026-full": {
+    id: "grabacion-16-06-2026-full",
+    label: "Grabación 16-06-2026 13:57 (60 s)",
+    mode: "single-continuous",
+    tracks: ["/audio/teaser-grabacion-16-06-2026.m4a"],
+  },
+  /** Ravel — Descargas */
+  ravel: {
+    id: "ravel",
+    label: "Ravel",
+    mode: "single-continuous",
+    tracks: ["/audio/teaser-ravel.m4a"],
+  },
+  /** Siglocatorce — Descargas */
+  siglocatorce: {
+    id: "siglocatorce",
+    label: "Siglocatorce",
+    mode: "single-continuous",
+    tracks: ["/audio/teaser-siglocatorce.m4a"],
+  },
+  /** Bach — Descargas */
+  bach: {
+    id: "bach",
+    label: "Bach",
+    mode: "single-continuous",
+    tracks: ["/audio/teaser-bach.m4a"],
+  },
 };
 
 /**
@@ -44,7 +76,7 @@ export const TEASER_AUDIO_PRESETS: Record<TeaserAudioPresetId, TeaserAudioPreset
  * - Prueba ahora: `"grabacion-14-06-2026-full"`
  * - Volver al que os gusta (dos audios): `"grabacion-2026-06-12"`
  */
-export const ACTIVE_TEASER_AUDIO_ID: TeaserAudioPresetId = "grabacion-14-06-2026-full";
+export const ACTIVE_TEASER_AUDIO_ID: TeaserAudioPresetId = "bach";
 
 export const ACTIVE_TEASER_AUDIO = TEASER_AUDIO_PRESETS[ACTIVE_TEASER_AUDIO_ID];
 

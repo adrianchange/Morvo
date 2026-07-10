@@ -10,6 +10,7 @@ import { FlyerSlide } from "./slides/FlyerSlide";
 import { SynopsisSlide } from "./slides/SynopsisSlide";
 import { TeaserSlide } from "./slides/TeaserSlide";
 import { preloadTeaserCoverImages } from "./TeaserVideo";
+import { PETROLEO_PHOTOS } from "../assets/petroleoPhotos";
 
 type Props = {
   paletteId: PaletteId;
@@ -72,6 +73,9 @@ export function Dossier({ paletteId, onBack }: Props) {
     [next, prev]
   );
 
+  const isPetroleo = paletteId === "raiz_petroleo";
+  const isHelecho = paletteId === "raiz_helecho";
+
   const slides = [
     <CoverSlide key="cover" theme={theme} />,
     <FlyerSlide key="photo" theme={theme} />,
@@ -84,7 +88,9 @@ export function Dossier({ paletteId, onBack }: Props) {
         characterName: "Mario",
         actorName: "Javier Estevez Permuy",
         photoLabel: "[Foto del personaje]",
-        photoUrl: "https://images.unsplash.com/photo-1516944486937-aca8e1c5cfce?w=1200&h=800&fit=crop&auto=format",
+        photoUrl: isPetroleo
+          ? PETROLEO_PHOTOS.mario
+          : "https://images.unsplash.com/photo-1516944486937-aca8e1c5cfce?w=1200&h=800&fit=crop&auto=format",
       }}
     />,
     <CharacterSlide
@@ -95,7 +101,9 @@ export function Dossier({ paletteId, onBack }: Props) {
         characterName: "Cristian",
         actorName: "Ciprian Gheorghe",
         photoLabel: "[Foto del personaje]",
-        photoUrl: "https://images.unsplash.com/photo-1771980590254-cbe347e4003e?w=1200&h=800&fit=crop&auto=format",
+        photoUrl: isPetroleo
+          ? PETROLEO_PHOTOS.cristian
+          : "https://images.unsplash.com/photo-1771980590254-cbe347e4003e?w=1200&h=800&fit=crop&auto=format",
       }}
     />,
     <CharacterSlide
@@ -106,7 +114,12 @@ export function Dossier({ paletteId, onBack }: Props) {
         characterName: "Víctor",
         actorName: "Adrian Popovici",
         photoLabel: "[Foto del personaje]",
-        photoUrl: "https://images.unsplash.com/photo-1724380597255-944485791d3d?w=1200&h=800&fit=crop&auto=format",
+        photoUrl: isPetroleo
+          ? PETROLEO_PHOTOS.victor
+          : isHelecho
+            ? undefined
+            : "https://images.unsplash.com/photo-1724380597255-944485791d3d?w=1200&h=800&fit=crop&auto=format",
+        hidePhoto: isHelecho,
       }}
     />,
     <CharacterSlide

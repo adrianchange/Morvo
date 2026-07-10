@@ -10,6 +10,9 @@ type Props = { theme: PaletteTheme };
 const TEASER_SIDE_INSET =
   "calc(clamp(12px, 2vw, 28px) + clamp(40px, 4.5vw, 56px) + 15px)";
 
+/** Margen lateral en móvil: flecha (~40px) + separación */
+const MOBILE_TEASER_SIDE_INSET = "calc(12px + 40px + 12px)";
+
 function ContactBlock({
   label,
   value,
@@ -81,13 +84,23 @@ function SectionLabel({
 }
 
 function MobileTeaser({ theme, text }: { theme: PaletteTheme; text: string }) {
+  const contactSectionStyle = {
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    width: "100%",
+    textAlign: "center" as const,
+    gap: 0,
+  };
+
   return (
     <SlideShell theme={theme} index="08" scrollable>
       <div
         style={{
-          padding: "48px 24px 48px",
+          padding: `48px ${MOBILE_TEASER_SIDE_INSET} 48px`,
           display: "flex",
           flexDirection: "column",
+          alignItems: "center",
           gap: 24,
         }}
       >
@@ -109,17 +122,18 @@ function MobileTeaser({ theme, text }: { theme: PaletteTheme; text: string }) {
           <TeaserVideo
             font={fontDisplay(theme)}
             accentColor={slideText(theme)}
-            style={{ width: "100%", aspectRatio: "16/9" }}
+            paletteId={theme.id}
+            style={{ width: "100%", maxWidth: 480, aspectRatio: "16/9" }}
           />
         ) : (
           <MediaFrame
             theme={theme}
             label="[Vídeo teaser]"
-            style={{ width: "100%", aspectRatio: "16/9" }}
+            style={{ width: "100%", maxWidth: 480, aspectRatio: "16/9" }}
           />
         )}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        <div style={contactSectionStyle}>
           <SectionLabel theme={theme} text={text} compact>
             Contacto
           </SectionLabel>
@@ -132,13 +146,13 @@ function MobileTeaser({ theme, text }: { theme: PaletteTheme; text: string }) {
         <div
           style={{
             width: "60%",
+            maxWidth: 220,
             height: 1,
-            alignSelf: "center",
             background: `linear-gradient(90deg, transparent, ${text}33, transparent)`,
           }}
         />
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        <div style={contactSectionStyle}>
           <SectionLabel theme={theme} text={text} compact>
             Ficha técnica
           </SectionLabel>
@@ -192,6 +206,7 @@ function DesktopTeaser({ theme, text }: { theme: PaletteTheme; text: string }) {
           <TeaserVideo
             font={fontDisplay(theme)}
             accentColor={slideText(theme)}
+            paletteId={theme.id}
             style={{ flex: "0 0 40%", width: "40%", maxWidth: "40%", minHeight: 0 }}
           />
         ) : (
